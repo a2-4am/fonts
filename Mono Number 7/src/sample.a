@@ -1,0 +1,220 @@
+;license:MIT
+;(c) 2023 by 4am
+;
+!cpu 6502
+!to "build/SAMPLE.SYSTEM#FF2000",plain
+*=$2000
+
+         !source "../common/src/constants.a"    ; no code
+         !source "../common/src/macros.a"       ; no code
+
+         +READ_ROM_NO_WRITE
+         sta   PRIMARYCHARSET
+         sta   CLR80VID
+         sta   STOREOFF
+         sta   READMAINMEM
+         sta   WRITEMAINMEM
+         jsr   ROM_TEXT
+         jsr   ROM_HOME
+         jsr   ROM_NORMAL
+         jsr   ROM_IN0
+         jsr   ROM_PR0
+         +BUILD_HGR_LOOKUP_TABLES HGRLO, HGRHI
+
+         ; relocate program code
+-        inc   FM+2
+         inc   FMDEST+2
+         lda   FM+2
+         cmp   #>LastMover
+         bcc   -
+         ldx   #0
+FM       lda   FirstMover, x
+FMDEST   sta   RELOC, x
+         inx
+         bne   FM
+         dec   FM+2
+         dec   FMDEST+2
+         lda   FMDEST+2
+         cmp   #>RELOC
+         bcs   FM
+
+         jmp   Start
+
+FirstMover
+!pseudopc RELOC {
+Start
+         jsr   Home
+         lda   #0
+         sta   STRINGINDEX
+PrintLoop
+         ldx   STRINGINDEX
+         lda   StringPointers, x
+         inx
+         ldy   StringPointers, x
+         beq   PrintDone
+         inx
+         stx   STRINGINDEX
+         ldx   #0
+         jsr   DrawString
+         inc   VTAB
+         bne   PrintLoop             ; always branches
+PrintDone
+         +DEBUGWAIT
+         bit   CLEARKBD
+         jsr   PRODOS_MLI
+         !byte $65
+         !word +
++        !byte 4
+
+s_header1
+         !byte 40
+         !raw  "Mono Number 7            (c) 2023 by 4am"
+s_blank
+         !byte 0
+s_header2
+         !byte 40
+         !raw  "A decorative pixel font for the Apple II"
+s_sample1
+         !byte 40
+         !raw  "Pack my box with five dozen liquor jugs."
+s_sample2
+         !BYTE 37
+         !RAW  "Jackdaw love my big sphinx of quartz"
+s_sample3
+         !byte 37
+         !raw  "Sphinx of black quartz, judge my vow!"
+s_sample4
+         !byte 36
+         !raw  "The five boxing wizards jump quickly"
+s_sample5
+         !byte 35
+         !raw  "How quickly daft jumping zebras vex"
+s_sample6
+         !byte 34
+         !raw  "Glib jocks quiz nymph to vex dwarf"
+s_alpha_upper
+         !byte 26
+         !raw  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+s_alpha_lower
+         !byte 26
+         !raw  "abcdefghijklmnopqrstuvwxyz"
+s_numerals
+         !byte 37
+         !raw  "1234567890@#$%^&*()-=_+[]\\;':\",./<>?!"
+s_lorem_1
+         !byte 39
+         !raw  "Lorem ipsum dolor sit amet, consectetur"
+s_lorem_2
+         !byte 38
+         !raw  "adipiscing elit, sed do eiusmod tempor"
+s_lorem_3
+         !byte 36
+         !raw  "incididunt ut labore et dolore magna"
+s_lorem_4
+         !byte 40
+         !raw  "aliqua. Lacus vel facilisis volutpat est"
+s_lorem_5
+         !byte 39
+         !raw  "velit egestas dui id. Ornare massa eget"
+s_lorem_6
+         !byte 38
+         !raw  "egestas purus viverra accumsan in nisl"
+s_lorem_7
+         !byte 39
+         !raw  "nisi. Id venenatis a condimentum vitae."
+s_lorem_8
+         !byte 38
+         !raw  "imperdiet nulla malesuada pellentesque"
+s_lorem_9
+         !byte 40
+         !raw  "elit eget. Lobortis mattis aliquam arcu."
+
+StringPointers
+         !word s_header1
+         !word s_blank
+         !word s_header2
+         !word s_blank
+         !word s_sample1
+         !word s_sample2
+         !word s_sample3
+         !word s_sample4
+         !word s_sample5
+         !word s_sample6
+         !word s_blank
+         !word s_alpha_upper
+         !word s_alpha_lower
+         !word s_numerals
+         !word s_blank
+         !word s_lorem_1
+         !word s_lorem_2
+         !word s_lorem_3
+         !word s_lorem_4
+         !word s_lorem_5
+         !word s_lorem_6
+         !word s_lorem_7
+         !word s_lorem_8
+         !word s_lorem_9
+         !word 0
+
+;------------------------------------------------------------------------------
+; Home
+; clear graphics page 1
+;
+; in:    text screen 1 is clear (this is done at program startup)
+; out:   hi-res page 1 cleared
+;        text page 1 displayed
+;        pointer is hidden
+;        X preserved
+;        A/Y clobbered
+;        flags clobbered
+;------------------------------------------------------------------------------
+Home
+         bit   PAGE1
+         bit   FULLGFX
+         bit   HIRES
+         bit   TEXTMODE
+         ldy   #$00
+         lda   #$80
+-        sta   $2000, y
+         sta   $2100, y
+         sta   $2200, y
+         sta   $2300, y
+         sta   $2400, y
+         sta   $2500, y
+         sta   $2600, y
+         sta   $2700, y
+         sta   $2800, y
+         sta   $2900, y
+         sta   $2A00, y
+         sta   $2B00, y
+         sta   $2C00, y
+         sta   $2D00, y
+         sta   $2E00, y
+         sta   $2F00, y
+         sta   $3000, y
+         sta   $3100, y
+         sta   $3200, y
+         sta   $3300, y
+         sta   $3400, y
+         sta   $3500, y
+         sta   $3600, y
+         sta   $3700, y
+         sta   $3800, y
+         sta   $3900, y
+         sta   $3A00, y
+         sta   $3B00, y
+         sta   $3C00, y
+         sta   $3D00, y
+         sta   $3E00, y
+         sta   $3F00, y
+         iny
+         bne   -
+         lda   #0
+         sta   VTAB
+         bit   GFXMODE
+         rts
+
+         !source "src/ui.font.a"
+         !source "src/ui.font.data.a"
+}
+LastMover
