@@ -5,8 +5,8 @@
 !to "build/SAMPLE.SYSTEM#FF2000",plain
 *=$2000
 
-         !source "src/constants.a"              ; no code
-         !source "src/macros.a"                 ; no code
+         !source "../common/src/constants.a"    ; no code
+         !source "../common/src/macros.a"       ; no code
 
          +READ_ROM_NO_WRITE
          sta   PRIMARYCHARSET
