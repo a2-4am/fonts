@@ -1,0 +1,252 @@
+;license:MIT
+;(c) 2023 by 4am
+;
+!cpu 6502
+!to "build/SAMPLE.SYSTEM#FF2000",plain
+*=$2000
+
+         !source "src/constants.a"              ; no code
+         !source "src/macros.a"                 ; no code
+
+         +READ_ROM_NO_WRITE
+         sta   PRIMARYCHARSET
+         sta   CLR80VID
+         sta   STOREOFF
+         sta   READMAINMEM
+         sta   WRITEMAINMEM
+         jsr   ROM_TEXT
+         jsr   ROM_HOME
+         jsr   ROM_NORMAL
+         jsr   ROM_IN0
+         jsr   ROM_PR0
+         +BUILD_HGR_LOOKUP_TABLES HGRLO, HGRHI
+
+         ; relocate program code
+-        inc   FM+2
+         inc   FMDEST+2
+         lda   FM+2
+         cmp   #>LastMover
+         bcc   -
+         ldx   #0
+FM       lda   FirstMover, x
+FMDEST   sta   RELOC, x
+         inx
+         bne   FM
+         dec   FM+2
+         dec   FMDEST+2
+         lda   FMDEST+2
+         cmp   #>RELOC
+         bcs   FM
+
+         jmp   Start
+
+FirstMover
+!pseudopc RELOC {
+Start
+         jsr   Home
+         lda   #0
+         sta   STRINGINDEX
+PrintLoop
+         ldx   STRINGINDEX
+         lda   StringPointers, x
+         inx
+         ldy   StringPointers, x
+         beq   PrintDone
+         inx
+         stx   STRINGINDEX
+         ldx   #0
+         jsr   DrawString
+         inc   VTAB
+         bne   PrintLoop             ; always branches
+PrintDone
+         +DEBUGWAIT
+         bit   CLEARKBD
+         jsr   PRODOS_MLI
+         !byte $65
+         !word +
++        !byte 4
+
+s_header1
+         !byte 40
+         !raw  "MONO NUMBER 5            (C) 2023 BY 4AM"
+s_blank
+         !byte 0
+s_header2
+         !byte 39
+         !raw  "A TINY (BUT HIGHLY READABLE) PIXEL FONT"
+s_header3
+         !byte 39
+         !raw  "FOR THE APPLE ][ HI-RES GRAPHICS SCREEN"
+s_sample1
+         !byte 40
+         !raw  "PACK MY BOX WITH FIVE DOZEN LIQUOR JUGS."
+s_sample2
+         !BYTE 37
+         !RAW  "JACKDAWS LOVE MY BIG SPHINX OF QUARTZ"
+s_sample3
+         !byte 37
+         !raw  "SPHINX OF BLACK QUARTZ, JUDGE MY VOW!"
+s_sample4
+         !byte 36
+         !raw  "THE FIVE BOXING WIZARDS JUMP QUICKLY"
+s_sample5
+         !byte 35
+         !raw  "HOW QUICKLY DAFT JUMPING ZEBRAS VEX"
+s_sample6
+         !byte 34
+         !raw  "GLIB JOCKS QUIZ NYMPH TO VEX DWARF"
+s_alpha_upper
+         !byte 26
+         !raw  "ABCDEFGHIJKLMNOPRQSTUVWXYZ"
+s_numerals
+         !byte 37
+         !raw  "1234567890@#$%^&*()-=_+[]\\;':\",./<>?!"
+s_lorem_1
+         !byte 39
+         !raw  "LOREM IPSUM DOLOR SIT AMET, CONSECTETUR"
+s_lorem_2
+         !byte 38
+         !raw  "ADIPISCING ELIT, SED DO EIUSMOD TEMPOR"
+s_lorem_3
+         !byte 36
+         !raw  "INCIDIDUNT UT LABORE ET DOLORE MAGNA"
+s_lorem_4
+         !byte 40
+         !raw  "ALIQUA. LACUS VEL FACILISIS VOLUTPAT EST"
+s_lorem_5
+         !byte 39
+         !raw  "VELIT EGESTAS DUI ID. ORNARE MASSA EGET"
+s_lorem_6
+         !byte 38
+         !raw  "EGESTAS PURUS VIVERRA ACCUMSAN IN NISL"
+s_lorem_7
+         !byte 39
+         !raw  "NISI. ID VENENATIS A CONDIMENTUM VITAE."
+s_lorem_8
+         !byte 38
+         !raw  "IMPERDIET NULLA MALESUADA PELLENTESQUE"
+s_lorem_9
+         !byte 34
+         !raw  "ELIT EGET. LOBORTIS MATTIS ALIQUAM"
+s_lorem_10
+         !byte 34
+         !raw  "FAUCIBUS PURUS IN MASSA TEMPOR NEC"
+s_lorem_11
+         !byte 38
+         !raw  "SOLLICITUDIN AC ORCI PHASELLUS EGESTAS"
+s_lorem_12
+         !byte 37
+         !raw  "JUSTO EGET. CURABITUR GRAVIDA ARCU AC"
+s_lorem_13
+         !byte 40
+         !raw  "TORTOR. GRAVIDA IN FERMENTUM ET FEUGIAT."
+s_lorem_14
+         !byte 40
+         !raw  "SENECTUS ET. PELLENTESQUE HABITANT MORBI"
+s_lorem_15
+         !byte 37
+         !raw  "PELLENTESQUE HABITANT MORBI TRISTIQUE"
+s_lorem_16
+         !byte 36
+         !raw  "DOLOR SED VIVERRA IPSUM NUNC ALIQUET"
+s_lorem_17
+         !byte 39
+         !raw  "SODALES UT EU SEM INTEGER VITAE TELLUS."
+
+StringPointers
+         !word s_header1
+         !word s_blank
+         !word s_header2
+         !word s_header3
+         !word s_blank
+         !word s_sample1
+         !word s_sample2
+         !word s_sample3
+         !word s_sample4
+         !word s_sample5
+         !word s_sample6
+         !word s_blank
+         !word s_alpha_upper
+         !word s_numerals
+         !word s_blank
+         !word s_lorem_1
+         !word s_lorem_2
+         !word s_lorem_3
+         !word s_lorem_4
+         !word s_lorem_5
+         !word s_lorem_6
+         !word s_lorem_7
+         !word s_lorem_8
+         !word s_lorem_9
+         !word s_lorem_10
+         !word s_lorem_11
+         !word s_lorem_12
+         !word s_lorem_13
+         !word s_lorem_14
+         !word s_lorem_15
+         !word s_lorem_16
+         !word s_lorem_17
+         !word 0
+
+;------------------------------------------------------------------------------
+; Home
+; clear graphics page 1
+;
+; in:    text screen 1 is clear (this is done at program startup)
+; out:   hi-res page 1 cleared
+;        text page 1 displayed
+;        pointer is hidden
+;        X preserved
+;        A/Y clobbered
+;        flags clobbered
+;------------------------------------------------------------------------------
+Home
+         bit   PAGE1
+         bit   FULLGFX
+         bit   HIRES
+         bit   TEXTMODE
+         ldy   #$00
+         lda   #$80
+-        sta   $2000, y
+         sta   $2100, y
+         sta   $2200, y
+         sta   $2300, y
+         sta   $2400, y
+         sta   $2500, y
+         sta   $2600, y
+         sta   $2700, y
+         sta   $2800, y
+         sta   $2900, y
+         sta   $2A00, y
+         sta   $2B00, y
+         sta   $2C00, y
+         sta   $2D00, y
+         sta   $2E00, y
+         sta   $2F00, y
+         sta   $3000, y
+         sta   $3100, y
+         sta   $3200, y
+         sta   $3300, y
+         sta   $3400, y
+         sta   $3500, y
+         sta   $3600, y
+         sta   $3700, y
+         sta   $3800, y
+         sta   $3900, y
+         sta   $3A00, y
+         sta   $3B00, y
+         sta   $3C00, y
+         sta   $3D00, y
+         sta   $3E00, y
+         sta   $3F00, y
+         iny
+         bne   -
+         lda   #0
+         sta   VTAB
+         bit   GFXMODE
+         rts
+
+         !source "src/ui.font.a"
+         !source "src/ui.font.data.a"
+}
+LastMover

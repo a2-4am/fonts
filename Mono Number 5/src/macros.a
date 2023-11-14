@@ -1,0 +1,102 @@
+;license:MIT
+;(c) 2020-2023 by 4am
+;
+; common assembler macros (6502 compatible)
+;
+
+; .hgrlo, .hgr1hi will each be filled with $C0 bytes
+; based on routine by John Brooks
+; posted on comp.sys.apple2 on 2018-07-11
+; https://groups.google.com/d/msg/comp.sys.apple2/v2HOfHOmeNQ/zD76fJg_BAAJ
+; clobbers A,X
+; preserves Y
+!macro BUILD_HGR_LOOKUP_TABLES .hgrlo, .hgr1hi {
+         ldx   #0
+-        txa
+         and   #$F8
+         bpl   +
+         ora   #5
++        asl
+         bpl   +
+         ora   #5
++        asl
+         asl
+         sta   .hgrlo, x
+         txa
+         and   #7
+         rol
+         asl   .hgrlo, x
+         rol
+         ora   #$20
+         sta   .hgr1hi, x
+         inx
+         cpx   #$C0
+         bne   -
+}
+
+; load the address of .ptr into A (low) and Y (high)
+; preserves X
+!macro   LDADDR .ptr {
+         lda   #<.ptr
+         ldy   #>.ptr
+}
+
+; load a 16-bit value into A (low) and Y (high)
+; preserves X
+!macro   LD16 .ptr {
+         lda   .ptr
+         ldy   .ptr+1
+}
+
+; store a 16-bit value from A (low) and Y (high)
+; preserves X
+!macro   ST16 .ptr {
+         sta   .ptr
+         sty   .ptr+1
+}
+
+; decrement a 16-bit value in A (low) and Y (high)
+; preserves X
+!macro   DEC16 {
+         sec
+         sbc   #1
+         bcs   +
+         dey
++
+}
+
+; increment a 16-bit value in A (low) and Y (high)
+; preserves X
+!macro   INC16 {
+         clc
+         adc   #1
+         bne   +
+         iny
++
+}
+
+; preserves A,X,Y
+!macro   READ_ROM_NO_WRITE {
+         bit   $C082
+}
+
+; use BIT to swallow the following 1-byte opcode
+; preserves A,X,Y
+!macro   HIDE_NEXT_BYTE {
+         !byte $24
+}
+
+; use BIT to swallow the following 2-byte opcode
+; preserves A,X,Y
+!macro   HIDE_NEXT_2_BYTES {
+         !byte $2C
+}
+
+; wait for keypress (for debugging)
+; preserves A,X,Y
+!macro   DEBUGWAIT {
+         bit   $c010
+-        bit   $c000
+         bpl   -
+         bit   $c010
+}
