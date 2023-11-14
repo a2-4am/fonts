@@ -68,90 +68,90 @@ PrintDone
 
 s_header1
          !byte 40
-         !raw  "MONO NUMBER 5            (C) 2023 BY 4AM"
+         !raw  "Mono Number 5            (c) 2023 by 4am"
 s_blank
          !byte 0
 s_header2
          !byte 39
-         !raw  "A TINY (BUT HIGHLY READABLE) PIXEL FONT"
+         !raw  "A tiny (but highly readable) pixel font"
 s_header3
          !byte 39
-         !raw  "FOR THE APPLE ][ HI-RES GRAPHICS SCREEN"
+         !raw  "for the apple ][ hi-res graphics screen"
 s_sample1
          !byte 40
-         !raw  "PACK MY BOX WITH FIVE DOZEN LIQUOR JUGS."
+         !raw  "Pack my box with five dozen liquor jugs."
 s_sample2
-         !BYTE 37
-         !RAW  "JACKDAWS LOVE MY BIG SPHINX OF QUARTZ"
+         !byte 37
+         !raw  "Jackdaws love my big sphinx of quartz"
 s_sample3
          !byte 37
-         !raw  "SPHINX OF BLACK QUARTZ, JUDGE MY VOW!"
+         !raw  "Sphinx of black quartz, judge my vow!"
 s_sample4
          !byte 36
-         !raw  "THE FIVE BOXING WIZARDS JUMP QUICKLY"
+         !raw  "The five boxing wizards jump quickly"
 s_sample5
          !byte 35
-         !raw  "HOW QUICKLY DAFT JUMPING ZEBRAS VEX"
+         !raw  "How quickly daft jumping zebras vex"
 s_sample6
          !byte 34
-         !raw  "GLIB JOCKS QUIZ NYMPH TO VEX DWARF"
+         !raw  "Glib jocks quiz nymph to vex dwarf"
 s_alpha_upper
          !byte 26
          !raw  "ABCDEFGHIJKLMNOPRQSTUVWXYZ"
+s_alpha_lower
+         !byte 26
+         !raw  "abcdefghijklmnoprqstuvwxyz"
 s_numerals
          !byte 37
          !raw  "1234567890@#$%^&*()-=_+[]\\;':\",./<>?!"
 s_lorem_1
          !byte 39
-         !raw  "LOREM IPSUM DOLOR SIT AMET, CONSECTETUR"
+         !raw  "lorem ipsum dolor sit amet, consectetur"
 s_lorem_2
          !byte 38
-         !raw  "ADIPISCING ELIT, SED DO EIUSMOD TEMPOR"
+         !raw  "adipiscing elit, sed do eiusmod tempor"
 s_lorem_3
          !byte 36
-         !raw  "INCIDIDUNT UT LABORE ET DOLORE MAGNA"
+         !raw  "incididunt ut labore et dolore magna"
 s_lorem_4
          !byte 40
-         !raw  "ALIQUA. LACUS VEL FACILISIS VOLUTPAT EST"
+         !raw  "aliqua. lacus vel facilisis volutpat est"
 s_lorem_5
          !byte 39
-         !raw  "VELIT EGESTAS DUI ID. ORNARE MASSA EGET"
+         !raw  "velit egestas dui id. ornare massa eget"
 s_lorem_6
          !byte 38
-         !raw  "EGESTAS PURUS VIVERRA ACCUMSAN IN NISL"
+         !raw  "egestas purus viverra accumsan in nisl"
 s_lorem_7
          !byte 39
-         !raw  "NISI. ID VENENATIS A CONDIMENTUM VITAE."
+         !raw  "nisi. id venenatis a condimentum vitae."
 s_lorem_8
          !byte 38
-         !raw  "IMPERDIET NULLA MALESUADA PELLENTESQUE"
+         !raw  "imperdiet nulla malesuada pellentesque"
 s_lorem_9
          !byte 34
-         !raw  "ELIT EGET. LOBORTIS MATTIS ALIQUAM"
+         !raw  "elit eget. lobortis mattis aliquam"
 s_lorem_10
          !byte 34
-         !raw  "FAUCIBUS PURUS IN MASSA TEMPOR NEC"
+         !raw  "faucibus purus in massa tempor nec"
 s_lorem_11
          !byte 38
-         !raw  "SOLLICITUDIN AC ORCI PHASELLUS EGESTAS"
+         !raw  "sollicitudin ac orci phasellus egestas"
 s_lorem_12
          !byte 37
-         !raw  "JUSTO EGET. CURABITUR GRAVIDA ARCU AC"
+         !raw  "justo eget. curabitur gravida arcu ac"
 s_lorem_13
          !byte 40
-         !raw  "TORTOR. GRAVIDA IN FERMENTUM ET FEUGIAT."
+         !raw  "tortor. gravida in fermentum et feugiat."
 s_lorem_14
          !byte 40
-         !raw  "SENECTUS ET. PELLENTESQUE HABITANT MORBI"
+         !raw  "senectus et. pellentesque habitant morbi"
 s_lorem_15
          !byte 37
-         !raw  "PELLENTESQUE HABITANT MORBI TRISTIQUE"
+         !raw  "pellentesque habitant morbi tristique"
 s_lorem_16
-         !byte 36
-         !raw  "DOLOR SED VIVERRA IPSUM NUNC ALIQUET"
-s_lorem_17
          !byte 39
-         !raw  "SODALES UT EU SEM INTEGER VITAE TELLUS."
+         !raw  "sodales ut eu sem integer vitae tellus."
 
 StringPointers
          !word s_header1
@@ -167,6 +167,7 @@ StringPointers
          !word s_sample6
          !word s_blank
          !word s_alpha_upper
+         !word s_alpha_lower
          !word s_numerals
          !word s_blank
          !word s_lorem_1
@@ -185,7 +186,6 @@ StringPointers
          !word s_lorem_14
          !word s_lorem_15
          !word s_lorem_16
-         !word s_lorem_17
          !word 0
 
 ;------------------------------------------------------------------------------
