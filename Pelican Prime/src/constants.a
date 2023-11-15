@@ -1,0 +1,30 @@
+;license:MIT
+;(c) 2023 by 4am
+;
+
+; application addresses
+dpc_draw = $80            ; 0x2A bytes
+dpc_string = $AA          ; word
+dpc_charcount = $AC       ; byte
+dpc_charindex = $AD       ; byte
+dpc_stringwidth = $AE     ; word
+dpc_HTAB = $B0            ; word
+dpc_VTAB = $B2            ; byte
+dpc_charoffset = $B3      ; word
+ZPTMP0=$FA                ; word (only used during init)
+ZPTMP1=$FC                ; word (only used during init)
+ZPTMP2=$FE                ; word (only used during init)
+
+HPixelToByte   = $BD00    ; 0x100 bytes, should be page-aligned
+HPixelToOffset = $BE00    ; 0x100 bytes, should be page-aligned
+HiMem          = HPixelToByte
+PelicanPrimeShift6 = HiMem - (kPelicanPrimeCount*9*2)
+PelicanPrimeShift5 = PelicanPrimeShift6 - (kPelicanPrimeCount*9*2)
+PelicanPrimeShift4 = PelicanPrimeShift5 - (kPelicanPrimeCount*9*2)
+PelicanPrimeShift3 = PelicanPrimeShift4 - (kPelicanPrimeCount*9*2)
+PelicanPrimeShift2 = PelicanPrimeShift3 - (kPelicanPrimeCount*9*2)
+PelicanPrimeShift1 = PelicanPrimeShift2 - (kPelicanPrimeCount*9*2)
+PelicanPrimeShift0 = PelicanPrimeShift1 - (kPelicanPrimeCount*9)
+PelicanPrimeOffsetHi = PelicanPrimeShift0 - (_PelicanPrimeShift0 - _PelicanPrimeOffsetHi)
+PelicanPrimeOffsetLo = PelicanPrimeOffsetHi - (_PelicanPrimeOffsetHi - _PelicanPrimeOffsetLo)
+PelicanPrimeWidths = PelicanPrimeOffsetLo - (_PelicanPrimeOffsetLo - _PelicanPrimeWidths)

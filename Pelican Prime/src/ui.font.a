@@ -1,0 +1,348 @@
+;license:MIT
+;(c) 2023 by 4am
+;
+; Pelican Prime proportional font drawing routines
+;
+; Public functions:
+; - GetCenteredHTAB
+; - GetStringWidth
+; - DrawCenteredString
+; - DrawString
+;
+
+GetCenteredHTAB
+; in:    A/Y -> length-prefixed string
+;        VTAB = logical row (0..18)
+         jsr   GetStringWidth
+         cpy   #1
+         ror
+         sta   @a+1
+         lda   #$8c
+         sec
+@a       sbc   #SELF_MODIFIED_BYTE
+         rts
+
+;------------------------------------------------------------------------------
+; GetStringWidth
+; calculate string width in pixels, based on widths of individual characters
+;
+; in:    A/Y -> length-prefixed string
+; out:   A/Y = string width in pixels (word)
+;        X clobbered
+;        flags clobbered
+;------------------------------------------------------------------------------
+GetStringWidth
+         +ST16 dpc_string
+         ldy   #0
+         sty   dpc_stringwidth
+         sty   dpc_stringwidth+1
+         lda   (dpc_string), y
+         beq   @exit
+         sta   dpc_charcount
+-        iny
+         lda   (dpc_string), y
+         cmp   #$20
+         beq   ++
+         cmp   #$1F
+         beq   +
+         tax
+         lda   PelicanPrimeWidths-kPelicanPrimeMin, x
+         +HIDE_NEXT_2_BYTES
++        lda   #kPelicanFullSpaceWidth
+         +HIDE_NEXT_2_BYTES
+++       lda   #kPelicanSpaceCharacterWidth
+         clc
+         adc   dpc_stringwidth
+         sta   dpc_stringwidth
+         bcc   +
+         inc   dpc_stringwidth+1
++        dec   dpc_charcount
+         bne   -
+@exit
+         +LD16 dpc_stringwidth
+FONTRTS  rts
+
+DrawCenteredString
+; in:    A/Y -> length-prefixed string
+;        VTAB = logical row (0..18)
+         jsr   GetCenteredHTAB
+         tax
+         +LD16 dpc_string
+         ; /!\ execution falls through here to DrawString
+
+;------------------------------------------------------------------------------
+; DrawString
+;
+; in:    A/Y -> length-prefixed string (Pascal style, length byte can be 0)
+;        X = horizontal pixel (0..255)
+;        VTAB = logical line number (0..18)
+; out:   clobbers all registers & flags
+;        clobbers HTAB
+;        preserves VTAB
+;------------------------------------------------------------------------------
+DrawString
+         stx   dpc_HTAB
+         ldx   #0
+         stx   dpc_HTAB+1
+DrawStringPast255 ; set dpc_HTAB and dpc_HTAB+1 yourself before calling
+         +ST16 dpc_string
+         +ST16 dps_src+1
+         ldy   #0
+         lda   (dpc_string), y
+         beq   FONTRTS
+         sta   dpc_charcount
+         iny
+         sty   dpc_charindex
+         ldx   VTAB
+         lda   PelicanRowTops, x
+         sta   dpc_VTAB
+         clc
+         adc   #kPelicanMaskHeight
+         sta   <dpc_max_row+1
+dps_loop
+         ldy   dpc_charindex
+dps_src  lda   SELF_MODIFIED_WORD, y
+
+         ; look up offset of this character within shift table
+         cmp   #$20
+         beq   dps_space_hack
+         cmp   #$1F
+         beq   dps_full_space_hack
+         tax
+         lda   PelicanPrimeOffsetLo-kPelicanPrimeMin, x
+         sta   dpc_charoffset
+         lda   PelicanPrimeOffsetHi-kPelicanPrimeMin, x
+         sta   dpc_charoffset+1
+
+         ; convert HGR horizonal pixel to byte + offset-within-byte
+         lda   PelicanPrimeWidths-kPelicanPrimeMin, x ; get character width
+         ldx   dpc_HTAB              ; get current HTAB (lo)
+         clc
+         adc   dpc_HTAB
+         sta   dpc_HTAB              ; update HTAB (lo)
+         lda   dpc_HTAB+1
+         beq   @HTAB_less_than_256
+         lda   HHiPixelToByte, x
+         ldy   HHiPixelToOffset, x
+         bpl   @check_shift          ; always branches, set by LDY (always 0..6)
+@HTAB_less_than_256
+         lda   HPixelToByte, x
+         ldy   HPixelToOffset, x
+@check_shift
+         bne   @shift_not_0
+         bcc   +                     ; set by ADC
+         inc   dpc_HTAB+1            ; update HTAB (hi)
++        lsr   dpc_charoffset+1      ; shift0 table is half the width (1 byte per character instead of 2)
+         ror   dpc_charoffset
+         clc
+         ldx   #0
+         beq   ++                    ; always branches
+@shift_not_0
+         bcc   +                     ; set by ADC
+         inc   dpc_HTAB+1            ; update HTAB (hi)
+         clc
++        ldx   #$38
+++       stx   <dpc_inner_loop
+         sta   <dpc_ystart+1
+
+         ; use offset-within-byte to look up the proper preshifted mask
+         lda   PelicanPrimeMaskShiftLo, y
+         sta   <dpc_mask+1
+         lda   PelicanPrimeMaskShiftHi, y
+         sta   <dpc_mask+2
+
+         ; calculate start of font data (= preshift table base + dpc_charoffset)
+         lda   PelicanPrimeShiftHi, y
+         ;C=0 here
+         adc   dpc_charoffset+1
+         sta   <dpc_src+2
+         lda   PelicanPrimeShiftLo, y
+         ;C=0 here
+         adc   dpc_charoffset
+         bcc   +
+         inc   <dpc_src+2
++        sta   <dpc_src+1
+
+         lda   dpc_VTAB
+         sta   <dpc_row_loop+1       ; start row
+         ldx   #0                    ; byte index within model
+         jsr   dpc_row_loop
+dps_next
+         inc   dpc_charindex
+         dec   dpc_charcount
+         bne   dps_loop
+@exit    rts
+dps_space_hack
+         lda   dpc_HTAB
+         clc
+         adc   #6
+-        sta   dpc_HTAB
+         bcc   +
+         inc   dpc_HTAB+1
++        bne   dps_next              ; always branches
+dps_full_space_hack
+         lda   dpc_HTAB
+         clc
+         adc   #7
+         jmp   -
+
+DPC_DRAW_START                       ; copied to zero page at startup
+!pseudopc dpc_draw {
+dpc_start
+         lda   HGRLO, y
+         sta   <dpc_dest+1
+         lda   HGRHI, y
+         sta   <dpc_dest+2
+dpc_ystart
+         ldy   #SELF_MODIFIED_BYTE   ; byte index within target HGR row
+         !byte $C0                   ; CPY #$38 will always clear carry
+                                     ; CPY #$00 will always set carry
+dpc_inner_loop
+         !byte SELF_MODIFIED_BYTE    ; #$00 or #$38
+dpc_src  lda   SELF_MODIFIED_WORD, x
+         beq   +                     ; expensive but worth it
+dpc_dest eor   SELF_MODIFIED_WORD, y
+dpc_mask and   SELF_MODIFIED_WORD, x
+         eor   (<dpc_dest+1), y
+         sta   (<dpc_dest+1), y
++        iny
+         inx
+         bcc   dpc_inner_loop
+         inc   <dpc_row_loop+1
+dpc_row_loop
+         ldy   #SELF_MODIFIED_BYTE
+dpc_max_row
+         cpy   #SELF_MODIFIED_BYTE
+         bcc   dpc_start
+         rts
+}
+DPC_DRAW_END
+
+;------------------------------------------------------------------------------
+; private
+
+kPelicanMaskHeight = 9
+kPelicanSpaceCharacterWidth = 6
+kPelicanFullSpaceWidth = 7
+
+PelicanRowTops
+         ; !byte 0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180
+         !byte 0+2, 12+2, 24+2, 36+2, 48+2, 60+2, 72+2, 84+2, 96+2, 108+2, 120+2, 132+2, 144+2, 156+2, 168+2, 180+2
+
+; Structure of these is intentionally repetitive to allow font drawing
+; routine to be slightly faster. Do not optimize these tables.
+PelicanPrimeMaskShift0
+         !byte %01111111
+         !byte %01111111
+         !byte %01111111
+         !byte %01111111
+         !byte %01111111
+         !byte %01111111
+         !byte %01111111
+         !byte %01111111
+         !byte %01111111
+PelicanPrimeMaskShift1
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+         !byte %01111110,%00000001
+PelicanPrimeMaskShift2
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+         !byte %01111100,%00000011
+PelicanPrimeMaskShift3
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+         !byte %01111000,%00000111
+PelicanPrimeMaskShift4
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+         !byte %01110000,%00001111
+PelicanPrimeMaskShift5
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+         !byte %01100000,%00011111
+PelicanPrimeMaskShift6
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+         !byte %01000000,%00111111
+PelicanPrimeMaskShiftLo
+         !byte <PelicanPrimeMaskShift0
+         !byte <PelicanPrimeMaskShift1
+         !byte <PelicanPrimeMaskShift2
+         !byte <PelicanPrimeMaskShift3
+         !byte <PelicanPrimeMaskShift4
+         !byte <PelicanPrimeMaskShift5
+         !byte <PelicanPrimeMaskShift6
+PelicanPrimeMaskShiftHi
+         !byte >PelicanPrimeMaskShift0
+         !byte >PelicanPrimeMaskShift1
+         !byte >PelicanPrimeMaskShift2
+         !byte >PelicanPrimeMaskShift3
+         !byte >PelicanPrimeMaskShift4
+         !byte >PelicanPrimeMaskShift5
+         !byte >PelicanPrimeMaskShift6
+PelicanPrimeShiftLo
+         !byte <PelicanPrimeShift0
+         !byte <PelicanPrimeShift1
+         !byte <PelicanPrimeShift2
+         !byte <PelicanPrimeShift3
+         !byte <PelicanPrimeShift4
+         !byte <PelicanPrimeShift5
+         !byte <PelicanPrimeShift6
+PelicanPrimeShiftHi
+         !byte >PelicanPrimeShift0
+         !byte >PelicanPrimeShift1
+         !byte >PelicanPrimeShift2
+         !byte >PelicanPrimeShift3
+         !byte >PelicanPrimeShift4
+         !byte >PelicanPrimeShift5
+         !byte >PelicanPrimeShift6
+
+; Additional horizontal-pixel-to-byte+offset tables for pixels 256..279
+; (pixels 0..255 use different tables which are generated at startup)
+HHiPixelToByte
+         !byte $24,$24,$24
+         !byte $25,$25,$25,$25,$25,$25,$25
+         !byte $26,$26,$26,$26,$26,$26,$26
+         !byte $27,$27,$27,$27,$27,$27,$27
+HHiPixelToOffset
+         !byte $04,$05,$06
+         !byte $00,$01,$02,$03,$04,$05,$06
+         !byte $00,$01,$02,$03,$04,$05,$06
+         !byte $00,$01,$02,$03,$04,$05,$06
