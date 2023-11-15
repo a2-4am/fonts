@@ -60,7 +60,6 @@ PrintLoop
          bne   PrintLoop             ; always branches
 PrintDone
          +DEBUGWAIT
-         bit   CLEARKBD
          jsr   PRODOS_MLI
          !byte $65
          !word +
@@ -184,64 +183,7 @@ StringPointers
          !word s_lorem_16
          !word 0
 
-;------------------------------------------------------------------------------
-; Home
-; clear graphics page 1
-;
-; in:    text screen 1 is clear (this is done at program startup)
-; out:   hi-res page 1 cleared
-;        text page 1 displayed
-;        pointer is hidden
-;        X preserved
-;        A/Y clobbered
-;        flags clobbered
-;------------------------------------------------------------------------------
-Home
-         bit   PAGE1
-         bit   FULLGFX
-         bit   HIRES
-         bit   TEXTMODE
-         ldy   #$00
-         lda   #$80
--        sta   $2000, y
-         sta   $2100, y
-         sta   $2200, y
-         sta   $2300, y
-         sta   $2400, y
-         sta   $2500, y
-         sta   $2600, y
-         sta   $2700, y
-         sta   $2800, y
-         sta   $2900, y
-         sta   $2A00, y
-         sta   $2B00, y
-         sta   $2C00, y
-         sta   $2D00, y
-         sta   $2E00, y
-         sta   $2F00, y
-         sta   $3000, y
-         sta   $3100, y
-         sta   $3200, y
-         sta   $3300, y
-         sta   $3400, y
-         sta   $3500, y
-         sta   $3600, y
-         sta   $3700, y
-         sta   $3800, y
-         sta   $3900, y
-         sta   $3A00, y
-         sta   $3B00, y
-         sta   $3C00, y
-         sta   $3D00, y
-         sta   $3E00, y
-         sta   $3F00, y
-         iny
-         bne   -
-         lda   #0
-         sta   VTAB
-         bit   GFXMODE
-         rts
-
+         !source "../common/src/ui.common.a"
          !source "src/ui.font.a"
          !source "src/ui.font.data.a"
 }
