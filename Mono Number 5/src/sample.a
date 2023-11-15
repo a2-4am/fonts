@@ -76,7 +76,7 @@ s_header2
          !raw  "A tiny (but highly readable) pixel font"
 s_header3
          !byte 39
-         !raw  "for the apple ][ hi-res graphics screen"
+         !raw  "for the Apple ][ hi-res graphics screen"
 s_sample1
          !byte 40
          !raw  "Pack my box with five dozen liquor jugs."
