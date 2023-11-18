@@ -69,19 +69,16 @@ DrawString
          lda   HGRHI, y
          sta   @row4+2
 @loop    ldy   $FDFD, x
-         lda   FontDataLookup, y
-         bmi   +
-         tay
-         lda   FontDataRow0, y
+         lda   FontDataRow0-$20, y
 @row0    sta   $FDFD, x
-         lda   FontDataRow1, y
+         lda   FontDataRow1-$20, y
 @row1    sta   $FDFD, x
-         lda   FontDataRow2, y
+         lda   FontDataRow2-$20, y
 @row2    sta   $FDFD, x
-         lda   FontDataRow3, y
+         lda   FontDataRow3-$20, y
 @row3    sta   $FDFD, x
-         lda   FontDataRow4, y
+         lda   FontDataRow4-$20, y
 @row4    sta   $FDFD, x
-+        dex
+         dex
          bpl   @loop
          rts
