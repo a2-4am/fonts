@@ -1,0 +1,184 @@
+;license:MIT
+;(c) 2022-3 by 4am
+;
+; Courier Double Prime font drawing routines
+;
+; Public functions:
+; - DrawCString
+; - DrawLargeCharacter
+;
+
+;------------------------------------------------------------------------------
+; DrawCString
+;
+; in:    A/Y points to null-terminated buffer of ASCII characters
+;        VTAB contains line number (0..23, note each character is 2 lines (16 rows) tall)
+;        HTAB contains column number (0..39, note each character is 2 bytes wide)
+; out:   clobbers all registers & flags
+;------------------------------------------------------------------------------
+DrawCString
+         +ST16 STRINGPTR
+         lda   #0
+         sta   @loop+1
+@loop    ldy   #SELF_MODIFIED_BYTE
+         lda   (STRINGPTR), y
+         beq   @exit
+         ldx   HTAB
+         ldy   VTAB
+         jsr   DrawLargeCharacter
+         inc   HTAB
+         inc   HTAB
+         inc   @loop+1
+         bne   @loop
+@exit    rts
+
+;------------------------------------------------------------------------------
+; DrawLargeCharacter
+; not-unrolled version, optimized for code size
+;
+; in:    A contains ASCII character
+;        Y contains line number (0..23, note each character is 2 lines (16 rows) tall)
+;        X contains column number (0..39, note each character is 2 bytes wide)
+; out:   clobbers all registers & flags
+;------------------------------------------------------------------------------
+DrawLargeCharacter
+         sec
+         sbc   #kFontDataMin
+         bcs   +
+         rts
++        sta   char_index
+         stx   char_column
+         tya
+         asl
+         asl
+         asl
+         sta   char_row
+
+         jsr   ComputeDrawAddresses
+         lda   FontDataLeftRow0, x   ; draw row 0, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow0, x  ; draw row 0, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow1, x   ; draw row 1, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow1, x  ; draw row 1, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow2, x   ; draw row 2, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow2, x  ; draw row 2, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow3, x   ; draw row 3, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow3, x  ; draw row 3, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow4, x   ; draw row 4, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow4, x  ; draw row 4, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow5, x   ; draw row 5, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow5, x  ; draw row 5, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow6, x   ; draw row 6, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow6, x  ; draw row 6, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow7, x   ; draw row 7, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow7, x  ; draw row 7, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow8, x   ; draw row 8, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow8, x  ; draw row 8, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow9, x   ; draw row 9, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow9, x  ; draw row 9, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow10, x  ; draw row 10, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow10, x ; draw row 10, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow11, x  ; draw row 11, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow11, x ; draw row 11, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow12, x  ; draw row 12, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow12, x ; draw row 12, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow13, x  ; draw row 13, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow13, x ; draw row 13, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow14, x  ; draw row 14, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow14, x ; draw row 14, byte 1
+         sta   (hgr_base_ptr), y
+
+         jsr   IncAndRecomputeDrawAddresses
+         lda   FontDataLeftRow15, x  ; draw row 15, byte 0
+         sta   (hgr_base_ptr), y
+         iny
+         lda   FontDataRightRow15, x ; draw row 15, byte 1
+         sta   (hgr_base_ptr), y
+
+         rts
+
+IncAndRecomputeDrawAddresses
+         inc   char_row
+ComputeDrawAddresses
+char_row=*+1
+         ldx   #SELF_MODIFIED_BYTE
+         lda   HGRLO, x
+         sta   hgr_base_ptr
+         lda   HGRHI, x
+         sta   hgr_base_ptr+1        ; (hgr_base_ptr) -> base address of top row to draw (used for upper-left block of each character)
+char_index=*+1
+         ldx   #SELF_MODIFIED_BYTE   ; X = 0-based index into FontDataLeftRow* array for the character we're drawing
+char_column=*+1
+         ldy   #SELF_MODIFIED_BYTE
+         rts

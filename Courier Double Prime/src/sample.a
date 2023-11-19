@@ -1,0 +1,90 @@
+;license:MIT
+;(c) 2022-3 by 4am
+;
+!cpu 6502
+!to "build/SAMPLE.SYSTEM#FF2000",plain
+*=$2000
+
+         !source "../common/src/constants.a"    ; no code
+         !source "../common/src/macros.a"       ; no code
+
+         +READ_ROM_NO_WRITE
+         sta   PRIMARYCHARSET
+         sta   CLR80VID
+         sta   STOREOFF
+         sta   READMAINMEM
+         sta   WRITEMAINMEM
+         jsr   ROM_TEXT
+         jsr   ROM_HOME
+         jsr   ROM_NORMAL
+         jsr   ROM_IN0
+         jsr   ROM_PR0
+         +BUILD_HGR_LOOKUP_TABLES HGRLO, HGRHI
+
+         ; relocate program code
+-        inc   FM+2
+         inc   FMDEST+2
+         lda   FM+2
+         cmp   #>LastMover
+         bcc   -
+         ldx   #0
+FM       lda   FirstMover, x
+FMDEST   sta   RELOC, x
+         inx
+         bne   FM
+         dec   FM+2
+         dec   FMDEST+2
+         lda   FMDEST+2
+         cmp   #>RELOC
+         bcs   FM
+
+         jmp   Start
+
+FirstMover
+!pseudopc RELOC {
+Start
+         jsr   Home
+         lda   #0
+         sta   VTAB
+         sta   STRINGINDEX
+PrintLoop
+         ldx   STRINGINDEX
+         lda   StringPointers, x
+         inx
+         ldy   StringPointers, x
+         beq   PrintDone
+         inx
+         stx   STRINGINDEX
+         ldx   #0
+         stx   HTAB
+         jsr   DrawCString
+         inc   VTAB
+         inc   VTAB
+         inc   VTAB
+         bne   PrintLoop             ; always branches
+PrintDone
+         +DEBUGWAIT
+         jsr   PRODOS_MLI
+         !byte $65
+         !word +
++        !byte 4
+
+header1
+         !raw  "COURIER DOUBLE PRIME",0
+alpha1
+         !raw  "   ABCDEFGHIJKLM",0
+alpha2
+         !raw  "   NOPQRSTUVWXYZ",0
+
+StringPointers
+         !word header1
+         !word alpha1-1
+         !word alpha1
+         !word alpha2
+         !word 0
+
+         !source "../common/src/ui.common.a"
+         !source "src/ui.font.a"
+         !source "src/ui.font.data.a"
+}
+LastMover
