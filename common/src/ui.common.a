@@ -1,9 +1,11 @@
 ;license:MIT
 ;(c) 2023 by 4am
 ;
+
 ;------------------------------------------------------------------------------
 ; Home
 ; clear graphics page 1
+; don't laugh, this is 6x faster than calling HGR ($F3E2)
 ;
 ; in:    text screen 1 is clear (this is done at program startup)
 ; out:   hi-res page 1 cleared
