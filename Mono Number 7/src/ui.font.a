@@ -80,19 +80,19 @@ DrawString
          lda   HGRHI, y
          sta   @row6+2
 @loop    ldy   $FDFD, x
-         lda   FontDataRow0-$20, y
+         lda   FontDataRow0-kFontDataMin, y
 @row0    sta   $FDFD, x
-         lda   FontDataRow1-$20, y
+         lda   FontDataRow1-kFontDataMin, y
 @row1    sta   $FDFD, x
-         lda   FontDataRow2-$20, y
+         lda   FontDataRow2-kFontDataMin, y
 @row2    sta   $FDFD, x
-         lda   FontDataRow3-$20, y
+         lda   FontDataRow3-kFontDataMin, y
 @row3    sta   $FDFD, x
-         lda   FontDataRow4-$20, y
+         lda   FontDataRow4-kFontDataMin, y
 @row4    sta   $FDFD, x
-         lda   FontDataRow5-$20, y
+         lda   FontDataRow5-kFontDataMin, y
 @row5    sta   $FDFD, x
-         lda   FontDataRow6-$20, y
+         lda   FontDataRow6-kFontDataMin, y
 @row6    sta   $FDFD, x
          dex
          bpl   @loop
