@@ -7,21 +7,17 @@
 ; clear graphics page 1
 ; don't laugh, this is 6x faster than calling HGR ($F3E2)
 ;
-; in:    text screen 1 is clear (this is done at program startup)
-; out:   hi-res page 1 cleared
-;        text page 1 displayed
-;        pointer is hidden
+; in:    none
+; out:   hi-res page 1 cleared and displayed
 ;        X preserved
-;        A/Y clobbered
+;        A=0
+;        Y=0
 ;        flags clobbered
 ;------------------------------------------------------------------------------
 Home
-         bit   PAGE1
-         bit   FULLGFX
-         bit   HIRES
-         bit   TEXTMODE
          ldy   #$00
-         lda   #$80
+         sty   VTAB
+         tya
 -        sta   $2000, y
          sta   $2100, y
          sta   $2200, y
@@ -56,7 +52,8 @@ Home
          sta   $3F00, y
          iny
          bne   -
-         lda   #0
-         sta   VTAB
+         bit   PAGE1
+         bit   FULLGFX
+         bit   HIRES
          bit   GFXMODE
          rts
