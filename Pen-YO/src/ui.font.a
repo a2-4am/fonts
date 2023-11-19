@@ -1,0 +1,162 @@
+;license:MIT
+;(c) 2018-2023 by 4am
+;
+; hi-res font drawing routines
+;
+; Public functions
+; - DrawCenteredString
+; - DrawString
+;
+
+HGRTops
+         !byte $00,$10,$20,$30,$40,$50,$60,$70,$80,$90,$A0,$B0
+
+;------------------------------------------------------------------------------
+; DrawString
+;
+; in:    A/Y points to length-prefixed string (Pascal style, length byte can be 0)
+;        X contains column number (0x00..0x27)
+;        VTAB contains logical line number (0-indexed)
+; out:   clobbers all registers & flags
+;        clobbers HTAB
+;        preserves VTAB
+;------------------------------------------------------------------------------
+DrawString
+         +ST16 STRINGPTR
+         stx   HTAB
+         ldy   #0
+         lda   (STRINGPTR), y
+         bne   +
+         rts
++        tax
+         dex
+         +LD16 STRINGPTR
+         +INC16
+         +ST16 @loop+1
+         ldy   VTAB
+         lda   HGRTops, y
+         tay
+         lda   HGRLO, y
+         clc
+         adc   HTAB
+         sta   @row0+1
+         lda   HGRHI, y
+         sta   @row0+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row1+1
+         lda   HGRHI, y
+         sta   @row1+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row2+1
+         lda   HGRHI, y
+         sta   @row2+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row3+1
+         lda   HGRHI, y
+         sta   @row3+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row4+1
+         lda   HGRHI, y
+         sta   @row4+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row5+1
+         lda   HGRHI, y
+         sta   @row5+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row6+1
+         lda   HGRHI, y
+         sta   @row6+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row7+1
+         lda   HGRHI, y
+         sta   @row7+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row8+1
+         lda   HGRHI, y
+         sta   @row8+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row9+1
+         lda   HGRHI, y
+         sta   @row9+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row10+1
+         lda   HGRHI, y
+         sta   @row10+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row11+1
+         lda   HGRHI, y
+         sta   @row11+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row12+1
+         lda   HGRHI, y
+         sta   @row12+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row13+1
+         lda   HGRHI, y
+         sta   @row13+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row14+1
+         lda   HGRHI, y
+         sta   @row14+2
+@loop    ldy   $FDFD, x
+         lda   FontDataRow0-kFontDataMin, y
+@row0    sta   $FDFD, x
+         lda   FontDataRow1-kFontDataMin, y
+@row1    sta   $FDFD, x
+         lda   FontDataRow2-kFontDataMin, y
+@row2    sta   $FDFD, x
+         lda   FontDataRow3-kFontDataMin, y
+@row3    sta   $FDFD, x
+         lda   FontDataRow4-kFontDataMin, y
+@row4    sta   $FDFD, x
+         lda   FontDataRow5-kFontDataMin, y
+@row5    sta   $FDFD, x
+         lda   FontDataRow6-kFontDataMin, y
+@row6    sta   $FDFD, x
+         lda   FontDataRow7-kFontDataMin, y
+@row7    sta   $FDFD, x
+         lda   FontDataRow8-kFontDataMin, y
+@row8    sta   $FDFD, x
+         lda   FontDataRow9-kFontDataMin, y
+@row9    sta   $FDFD, x
+         lda   FontDataRow10-kFontDataMin, y
+@row10   sta   $FDFD, x
+         lda   FontDataRow11-kFontDataMin, y
+@row11   sta   $FDFD, x
+         lda   FontDataRow12-kFontDataMin, y
+@row12   sta   $FDFD, x
+         lda   FontDataRow13-kFontDataMin, y
+@row13   sta   $FDFD, x
+         lda   FontDataRow14-kFontDataMin, y
+@row14   sta   $FDFD, x
+         dex
+         bpl   @loop
+@exit    rts
