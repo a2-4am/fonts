@@ -32,6 +32,7 @@ ROM_IN0        = $FE89    ; SETKBD
 ROM_PR0        = $FE93    ; SETVID
 
 ; application addresses
+hgr_base_ptr   = $FA      ; word
 STRINGINDEX    = $FD      ; byte
 STRINGPTR      = $FE      ; word
 HGRLO          = $1E00    ; 0xC0 bytes, should not cross page boundary

@@ -1,5 +1,0 @@
-;license:MIT
-;(c) 2023 by 4am
-;
-
-hgr_base_ptr   = $FA      ; word
