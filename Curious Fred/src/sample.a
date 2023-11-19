@@ -70,24 +70,6 @@ PrintDone
          !word +
 +        !byte 4
 
-DrawCString
-         +ST16 STRINGPTR
-         lda   #0
-         sta   @loop+1
-@loop    ldy   #SELF_MODIFIED_BYTE
-         lda   (STRINGPTR), y
-         beq   @exit
-         cmp   #$20
-         beq   +
-         ldx   HTAB
-         ldy   VTAB
-         jsr   DrawLargeCharacter
-         inc   HTAB
-+        inc   HTAB
-         inc   @loop+1
-         bne   @loop
-@exit    rts
-
 header1
          !raw  "        CURIOUS  FRED",0
 header2

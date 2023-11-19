@@ -4,16 +4,46 @@
 ; Curious Fred font drawing routines
 ;
 ; Public functions:
+; - DrawCString
 ; - DrawLargeCharacter
 ;
+
+;------------------------------------------------------------------------------
+; DrawCString
+;
+; in:    A/Y points to null-terminated buffer of ASCII characters
+;        VTAB contains line number (0..23, note each character is 2 lines (16 rows) tall)
+;        HTAB contains column number (0..39, note each character is 2 bytes wide)
+; out:   clobbers all registers & flags
+;------------------------------------------------------------------------------
+DrawCString
+         +ST16 STRINGPTR
+         lda   #0
+         sta   @loop+1
+@loop    ldy   #SELF_MODIFIED_BYTE
+         lda   (STRINGPTR), y
+         beq   @exit
+         cmp   #$20
+         beq   +
+         ldx   HTAB
+         ldy   VTAB
+         jsr   DrawLargeCharacter
+         inc   HTAB
++        inc   HTAB                  ; note: each space character only advances
+                                     ; 1 column instead of 2. You can change
+                                     ; this by moving the branch target to the
+                                     ; previous line and updating this comment.
+         inc   @loop+1
+         bne   @loop
+@exit    rts
 
 ;------------------------------------------------------------------------------
 ; DrawLargeCharacter
 ; not-unrolled version, optimized for code size
 ;
 ; in:    A contains ASCII character
-;        Y contains row number (0..39, note each character is 2 bytes wide)
-;        X contains column number (0..23, note each character is 2 lines (16 rows) tall)
+;        Y contains line number (0..23, note each character is 2 lines (16 rows) tall)
+;        X contains column number (0..39, note each character is 2 bytes wide)
 ; out:   clobbers all registers & flags
 ;------------------------------------------------------------------------------
 DrawLargeCharacter
