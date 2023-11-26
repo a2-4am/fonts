@@ -1,1 +1,1 @@
-![screenshot of font sample](Pelican%20Prime/sample.png)
+![screenshot of font sample](sample.png)
