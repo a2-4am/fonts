@@ -214,7 +214,6 @@ GetCenteredHTAB
 ;------------------------------------------------------------------------------
 ; private
 
-kPropFontMaskHeight = 9
 kPropFontSpaceCharacterWidth = 6
 
 PropFontRowTops

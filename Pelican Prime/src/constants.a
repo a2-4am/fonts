@@ -15,16 +15,18 @@ ZPTMP0=$FA                ; word (only used during init)
 ZPTMP1=$FC                ; word (only used during init)
 ZPTMP2=$FE                ; word (only used during init)
 
+kPropFontMaskHeight = 9
+
 HPixelToByte   = $BD00    ; 0x100 bytes, should be page-aligned
 HPixelToOffset = $BE00    ; 0x100 bytes, should be page-aligned
 HiMem          = HPixelToByte
-PropFontShift6 = HiMem - (kPropFontCount*9*2)
-PropFontShift5 = PropFontShift6 - (kPropFontCount*9*2)
-PropFontShift4 = PropFontShift5 - (kPropFontCount*9*2)
-PropFontShift3 = PropFontShift4 - (kPropFontCount*9*2)
-PropFontShift2 = PropFontShift3 - (kPropFontCount*9*2)
-PropFontShift1 = PropFontShift2 - (kPropFontCount*9*2)
-PropFontShift0 = PropFontShift1 - (kPropFontCount*9)
+PropFontShift6 = HiMem - (kPropFontCount*kPropFontMaskHeight*2)
+PropFontShift5 = PropFontShift6 - (kPropFontCount*kPropFontMaskHeight*2)
+PropFontShift4 = PropFontShift5 - (kPropFontCount*kPropFontMaskHeight*2)
+PropFontShift3 = PropFontShift4 - (kPropFontCount*kPropFontMaskHeight*2)
+PropFontShift2 = PropFontShift3 - (kPropFontCount*kPropFontMaskHeight*2)
+PropFontShift1 = PropFontShift2 - (kPropFontCount*kPropFontMaskHeight*2)
+PropFontShift0 = PropFontShift1 - (kPropFontCount*kPropFontMaskHeight)
 PropFontOffsetHi = PropFontShift0 - (_PropFontShift0 - _PropFontOffsetHi)
 PropFontOffsetLo = PropFontOffsetHi - (_PropFontOffsetHi - _PropFontOffsetLo)
 PropFontWidths = PropFontOffsetLo - (_PropFontOffsetLo - _PropFontWidths)
