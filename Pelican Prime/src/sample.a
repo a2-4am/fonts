@@ -23,16 +23,16 @@
          +BUILD_HGR_LOOKUP_TABLES HGRLO, HGRHI
 
          ; relocate font data
-         ldx   #>(EndPelicanPrimeData - StartPelicanPrimeData)
+         ldx   #>(EndPropFontData - StartPropFontData)
          ldy   #0
-PP       lda   StartPelicanPrimeData, y
-PPDEST   sta   PelicanPrimeWidths, y
+PF       lda   StartPropFontData, y
+PFDEST   sta   PropFontWidths, y
          iny
-         bne   PP
-         inc   PP+2
-         inc   PPDEST+2
+         bne   PF
+         inc   PF+2
+         inc   PFDEST+2
          dex
-         bpl   PP
+         bpl   PF
 
          ; relocate program code
 -        inc   FM+2
@@ -59,22 +59,22 @@ FMDEST   sta   RELOC, x
          bpl   -
 
          ; generate font preshift tables
-         lda   #<PelicanPrimeShift0
+         lda   #<PropFontShift0
          sta   ZPTMP0
-         lda   #>PelicanPrimeShift0
+         lda   #>PropFontShift0
          sta   ZPTMP0 + 1
-         lda   #<PelicanPrimeShift1
+         lda   #<PropFontShift1
          sta   ZPTMP1
-         lda   #>PelicanPrimeShift1
+         lda   #>PropFontShift1
          sta   ZPTMP1 + 1
          ldx   #6
          ldy   #0
 --       lda   ZPTMP1
          clc
-         adc   #<(kPelicanPrimeCount * 9 * 2)
+         adc   #<(kPropFontCount * 9 * 2)
          sta   ZPTMP2
          lda   ZPTMP1 + 1
-         adc   #>(kPelicanPrimeCount * 9 * 2)
+         adc   #>(kPropFontCount * 9 * 2)
          sta   ZPTMP2 + 1
 -        lda   (ZPTMP0), y
          inc   ZPTMP0
@@ -142,9 +142,9 @@ gpp_expand2
 
          jmp   Start
 
-StartPelicanPrimeData
+StartPropFontData
          !source "src/ui.font.data.a"
-EndPelicanPrimeData
+EndPropFontData
 
 FirstMover
 !pseudopc RELOC {

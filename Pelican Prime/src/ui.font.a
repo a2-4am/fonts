@@ -4,29 +4,16 @@
 ; Pelican Prime proportional font drawing routines
 ;
 ; Public functions:
-; - GetCenteredHTAB
 ; - GetStringWidth
 ; - DrawCenteredString
 ; - DrawString
 ;
 
-GetCenteredHTAB
-; in:    A/Y -> length-prefixed string
-;        VTAB = logical row (0..18)
-         jsr   GetStringWidth
-         cpy   #1
-         ror
-         sta   @a+1
-         lda   #$8c
-         sec
-@a       sbc   #SELF_MODIFIED_BYTE
-         rts
-
 ;------------------------------------------------------------------------------
 ; GetStringWidth
 ; calculate string width in pixels, based on widths of individual characters
 ;
-; in:    A/Y -> length-prefixed string
+; in:    A/Y -> length-prefixed string (Pascal style, length byte can be 0)
 ; out:   A/Y = string width in pixels (word)
 ;        X clobbered
 ;        flags clobbered
@@ -42,15 +29,11 @@ GetStringWidth
 -        iny
          lda   (dpc_string), y
          cmp   #$20
-         beq   ++
-         cmp   #$1F
          beq   +
          tax
-         lda   PelicanPrimeWidths-kPelicanPrimeMin, x
+         lda   PropFontWidths-kPropFontMin, x
          +HIDE_NEXT_2_BYTES
-+        lda   #kPelicanFullSpaceWidth
-         +HIDE_NEXT_2_BYTES
-++       lda   #kPelicanSpaceCharacterWidth
++        lda   #kPropFontSpaceCharacterWidth
          clc
          adc   dpc_stringwidth
          sta   dpc_stringwidth
@@ -94,28 +77,30 @@ DrawStringPast255 ; set dpc_HTAB and dpc_HTAB+1 yourself before calling
          iny
          sty   dpc_charindex
          ldx   VTAB
-         lda   PelicanRowTops, x
+         lda   PropFontRowTops, x
          sta   dpc_VTAB
          clc
-         adc   #kPelicanMaskHeight
+         adc   #kPropFontMaskHeight
          sta   <dpc_max_row+1
 dps_loop
          ldy   dpc_charindex
 dps_src  lda   SELF_MODIFIED_WORD, y
 
-         ; look up offset of this character within shift table
          cmp   #$20
          beq   dps_space_hack
-         cmp   #$1F
-         beq   dps_full_space_hack
+         cmp   #kPropFontMin
+         bcc   dps_next
+
+         ; look up offset of this character within shift table
          tax
-         lda   PelicanPrimeOffsetLo-kPelicanPrimeMin, x
-         sta   dpc_charoffset
-         lda   PelicanPrimeOffsetHi-kPelicanPrimeMin, x
+         lda   PropFontOffsetHi-kPropFontMin, x
+         bmi   dps_next
          sta   dpc_charoffset+1
+         lda   PropFontOffsetLo-kPropFontMin, x
+         sta   dpc_charoffset
 
          ; convert HGR horizonal pixel to byte + offset-within-byte
-         lda   PelicanPrimeWidths-kPelicanPrimeMin, x ; get character width
+         lda   PropFontWidths-kPropFontMin, x ; get character width
          ldx   dpc_HTAB              ; get current HTAB (lo)
          clc
          adc   dpc_HTAB
@@ -146,17 +131,17 @@ dps_src  lda   SELF_MODIFIED_WORD, y
          sta   <dpc_ystart+1
 
          ; use offset-within-byte to look up the proper preshifted mask
-         lda   PelicanPrimeMaskShiftLo, y
+         lda   PropFontMaskShiftLo, y
          sta   <dpc_mask+1
-         lda   PelicanPrimeMaskShiftHi, y
+         lda   PropFontMaskShiftHi, y
          sta   <dpc_mask+2
 
          ; calculate start of font data (= preshift table base + dpc_charoffset)
-         lda   PelicanPrimeShiftHi, y
+         lda   PropFontShiftHi, y
          ;C=0 here
          adc   dpc_charoffset+1
          sta   <dpc_src+2
-         lda   PelicanPrimeShiftLo, y
+         lda   PropFontShiftLo, y
          ;C=0 here
          adc   dpc_charoffset
          bcc   +
@@ -175,16 +160,11 @@ dps_next
 dps_space_hack
          lda   dpc_HTAB
          clc
-         adc   #6
--        sta   dpc_HTAB
+         adc   #kPropFontSpaceCharacterWidth
+         sta   dpc_HTAB
          bcc   +
          inc   dpc_HTAB+1
 +        bne   dps_next              ; always branches
-dps_full_space_hack
-         lda   dpc_HTAB
-         clc
-         adc   #7
-         jmp   -
 
 DPC_DRAW_START                       ; copied to zero page at startup
 !pseudopc dpc_draw {
@@ -218,20 +198,31 @@ dpc_max_row
 }
 DPC_DRAW_END
 
+GetCenteredHTAB
+; in:    A/Y -> length-prefixed string
+;        VTAB = logical row (0..18)
+; out:   A = HTAB for string to be centered on screen
+         jsr   GetStringWidth
+         cpy   #1
+         ror
+         sta   @a+1
+         lda   #$8c
+         sec
+@a       sbc   #SELF_MODIFIED_BYTE
+         rts
+
 ;------------------------------------------------------------------------------
 ; private
 
-kPelicanMaskHeight = 9
-kPelicanSpaceCharacterWidth = 6
-kPelicanFullSpaceWidth = 7
+kPropFontMaskHeight = 9
+kPropFontSpaceCharacterWidth = 6
 
-PelicanRowTops
-         ; !byte 0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180
-         !byte 0+2, 12+2, 24+2, 36+2, 48+2, 60+2, 72+2, 84+2, 96+2, 108+2, 120+2, 132+2, 144+2, 156+2, 168+2, 180+2
+PropFontRowTops
+         !byte 0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120, 132, 144, 156, 168, 180
 
 ; Structure of these is intentionally repetitive to allow font drawing
 ; routine to be slightly faster. Do not optimize these tables.
-PelicanPrimeMaskShift0
+PropFontMaskShift0
          !byte %01111111
          !byte %01111111
          !byte %01111111
@@ -241,7 +232,7 @@ PelicanPrimeMaskShift0
          !byte %01111111
          !byte %01111111
          !byte %01111111
-PelicanPrimeMaskShift1
+PropFontMaskShift1
          !byte %01111110,%00000001
          !byte %01111110,%00000001
          !byte %01111110,%00000001
@@ -251,7 +242,7 @@ PelicanPrimeMaskShift1
          !byte %01111110,%00000001
          !byte %01111110,%00000001
          !byte %01111110,%00000001
-PelicanPrimeMaskShift2
+PropFontMaskShift2
          !byte %01111100,%00000011
          !byte %01111100,%00000011
          !byte %01111100,%00000011
@@ -261,7 +252,7 @@ PelicanPrimeMaskShift2
          !byte %01111100,%00000011
          !byte %01111100,%00000011
          !byte %01111100,%00000011
-PelicanPrimeMaskShift3
+PropFontMaskShift3
          !byte %01111000,%00000111
          !byte %01111000,%00000111
          !byte %01111000,%00000111
@@ -271,7 +262,7 @@ PelicanPrimeMaskShift3
          !byte %01111000,%00000111
          !byte %01111000,%00000111
          !byte %01111000,%00000111
-PelicanPrimeMaskShift4
+PropFontMaskShift4
          !byte %01110000,%00001111
          !byte %01110000,%00001111
          !byte %01110000,%00001111
@@ -281,7 +272,7 @@ PelicanPrimeMaskShift4
          !byte %01110000,%00001111
          !byte %01110000,%00001111
          !byte %01110000,%00001111
-PelicanPrimeMaskShift5
+PropFontMaskShift5
          !byte %01100000,%00011111
          !byte %01100000,%00011111
          !byte %01100000,%00011111
@@ -291,7 +282,7 @@ PelicanPrimeMaskShift5
          !byte %01100000,%00011111
          !byte %01100000,%00011111
          !byte %01100000,%00011111
-PelicanPrimeMaskShift6
+PropFontMaskShift6
          !byte %01000000,%00111111
          !byte %01000000,%00111111
          !byte %01000000,%00111111
@@ -301,38 +292,38 @@ PelicanPrimeMaskShift6
          !byte %01000000,%00111111
          !byte %01000000,%00111111
          !byte %01000000,%00111111
-PelicanPrimeMaskShiftLo
-         !byte <PelicanPrimeMaskShift0
-         !byte <PelicanPrimeMaskShift1
-         !byte <PelicanPrimeMaskShift2
-         !byte <PelicanPrimeMaskShift3
-         !byte <PelicanPrimeMaskShift4
-         !byte <PelicanPrimeMaskShift5
-         !byte <PelicanPrimeMaskShift6
-PelicanPrimeMaskShiftHi
-         !byte >PelicanPrimeMaskShift0
-         !byte >PelicanPrimeMaskShift1
-         !byte >PelicanPrimeMaskShift2
-         !byte >PelicanPrimeMaskShift3
-         !byte >PelicanPrimeMaskShift4
-         !byte >PelicanPrimeMaskShift5
-         !byte >PelicanPrimeMaskShift6
-PelicanPrimeShiftLo
-         !byte <PelicanPrimeShift0
-         !byte <PelicanPrimeShift1
-         !byte <PelicanPrimeShift2
-         !byte <PelicanPrimeShift3
-         !byte <PelicanPrimeShift4
-         !byte <PelicanPrimeShift5
-         !byte <PelicanPrimeShift6
-PelicanPrimeShiftHi
-         !byte >PelicanPrimeShift0
-         !byte >PelicanPrimeShift1
-         !byte >PelicanPrimeShift2
-         !byte >PelicanPrimeShift3
-         !byte >PelicanPrimeShift4
-         !byte >PelicanPrimeShift5
-         !byte >PelicanPrimeShift6
+PropFontMaskShiftLo
+         !byte <PropFontMaskShift0
+         !byte <PropFontMaskShift1
+         !byte <PropFontMaskShift2
+         !byte <PropFontMaskShift3
+         !byte <PropFontMaskShift4
+         !byte <PropFontMaskShift5
+         !byte <PropFontMaskShift6
+PropFontMaskShiftHi
+         !byte >PropFontMaskShift0
+         !byte >PropFontMaskShift1
+         !byte >PropFontMaskShift2
+         !byte >PropFontMaskShift3
+         !byte >PropFontMaskShift4
+         !byte >PropFontMaskShift5
+         !byte >PropFontMaskShift6
+PropFontShiftLo
+         !byte <PropFontShift0
+         !byte <PropFontShift1
+         !byte <PropFontShift2
+         !byte <PropFontShift3
+         !byte <PropFontShift4
+         !byte <PropFontShift5
+         !byte <PropFontShift6
+PropFontShiftHi
+         !byte >PropFontShift0
+         !byte >PropFontShift1
+         !byte >PropFontShift2
+         !byte >PropFontShift3
+         !byte >PropFontShift4
+         !byte >PropFontShift5
+         !byte >PropFontShift6
 
 ; Additional horizontal-pixel-to-byte+offset tables for pixels 256..279
 ; (pixels 0..255 use different tables which are generated at startup)
