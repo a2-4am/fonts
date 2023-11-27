@@ -1,7 +1,7 @@
 ;license:MIT
 ;(c) 2023 by 4am
 ;
-; Pelican Prime proportional font drawing routines
+; Fred Mini proportional font drawing routines
 ;
 ; Public functions:
 ; - GetStringWidth
@@ -30,6 +30,10 @@ GetStringWidth
          lda   (dpc_string), y
          cmp   #$20
          beq   +
+         cmp   #kPropFontMin
+         bcc   @next
+         cmp   #kPropFontMax
+         bcs   @next
          tax
          lda   PropFontWidths-kPropFontMin, x
          +HIDE_NEXT_2_BYTES
@@ -37,9 +41,9 @@ GetStringWidth
          clc
          adc   dpc_stringwidth
          sta   dpc_stringwidth
-         bcc   +
+         bcc   @next
          inc   dpc_stringwidth+1
-+        dec   dpc_charcount
+@next    dec   dpc_charcount
          bne   -
 @exit
          +LD16 dpc_stringwidth
@@ -90,6 +94,8 @@ dps_src  lda   SELF_MODIFIED_WORD, y
          beq   dps_space_hack
          cmp   #kPropFontMin
          bcc   dps_next
+         cmp   #kPropFontMax
+         bcs   dps_next
 
          ; look up offset of this character within shift table
          tax
@@ -222,75 +228,19 @@ PropFontRowTops
 ; Structure of these is intentionally repetitive to allow font drawing
 ; routine to be slightly faster. Do not optimize these tables.
 PropFontMaskShift0
-         !byte %01111111
-         !byte %01111111
-         !byte %01111111
-         !byte %01111111
-         !byte %01111111
-         !byte %01111111
-         !byte %01111111
-         !byte %01111111
-         !byte %01111111
+         !fill kPropFontMaskHeight, %01111111
 PropFontMaskShift1
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
-         !byte %01111110,%00000001
+         !for  x, 1, kPropFontMaskHeight { !byte %01111110,%00000001 }
 PropFontMaskShift2
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
-         !byte %01111100,%00000011
+         !for  x, 1, kPropFontMaskHeight { !byte %01111100,%00000011 }
 PropFontMaskShift3
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
-         !byte %01111000,%00000111
+         !for  x, 1, kPropFontMaskHeight { !byte %01111000,%00000111 }
 PropFontMaskShift4
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
-         !byte %01110000,%00001111
+         !for  x, 1, kPropFontMaskHeight { !byte %01110000,%00001111 }
 PropFontMaskShift5
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
-         !byte %01100000,%00011111
+         !for  x, 1, kPropFontMaskHeight { !byte %01100000,%00011111 }
 PropFontMaskShift6
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
-         !byte %01000000,%00111111
+         !for  x, 1, kPropFontMaskHeight { !byte %01000000,%00111111 }
 PropFontMaskShiftLo
          !byte <PropFontMaskShift0
          !byte <PropFontMaskShift1
