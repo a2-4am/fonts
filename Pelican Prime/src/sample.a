@@ -71,10 +71,10 @@ FMDEST   sta   RELOC, x
          ldy   #0
 --       lda   ZPTMP1
          clc
-         adc   #<(kPropFontCount * 9 * 2)
+         adc   #<(kPropFontCount * kPropFontMaskHeight * 2)
          sta   ZPTMP2
          lda   ZPTMP1 + 1
-         adc   #>(kPropFontCount * 9 * 2)
+         adc   #>(kPropFontCount * kPropFontMaskHeight * 2)
          sta   ZPTMP2 + 1
 -        lda   (ZPTMP0), y
          inc   ZPTMP0
