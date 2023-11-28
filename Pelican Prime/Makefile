@@ -36,3 +36,5 @@ $(BUILDDIR):
 	@mkdir -p "$@"
 
 all: clean mount
+
+.NOTPARALLEL:
