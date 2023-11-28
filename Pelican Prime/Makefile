@@ -7,32 +7,32 @@ CADIUS=cadius
 # https://python.org/
 PYTHON=python3
 
-BUILDDISK=build/sample
+BUILDDIR=build
+SOURCES=$(wildcard src/*.a)
+FONTDATA=src/ui.font.data.a
+EXE=$(BUILDDIR)/SAMPLE.SYSTEM\#FF2000
+DISKVOLUME=SAMPLE
+BUILDDISK=$(BUILDDIR)/sample.po
 
-asm: preconditions md
-	$(ACME) -r build/sample.lst src/sample.a 2>build/log
+.PHONY: clean mount all
 
-font: preconditions
-	$(PYTHON) font.py > src/ui.font.data.a
+$(BUILDDISK): $(EXE)
+	cp ../common/blank.po "$@"
+	$(CADIUS) ADDFILE "$@" "/$(DISKVOLUME)/" "$(EXE)"
 
-dist: preconditions asm
-	cp ../common/blank.po "$(BUILDDISK)".po
-	$(CADIUS) ADDFILE "${BUILDDISK}".po "/SAMPLE/" "build/SAMPLE.SYSTEM#FF2000"
+$(EXE): $(SOURCES) $(BUILDDIR) $(FONTDATA)
+	$(ACME) -r build/sample.lst src/sample.a
+
+$(FONTDATA): font.py font-master.txt
+	$(PYTHON) font.py > "$@"
+
+mount: $(BUILDDISK)
+	open "$(BUILDDISK)"
 
 clean:
-	rm -rf build/
+	rm -rf "$(BUILDDIR)"
 
-md:
-	mkdir -p build
+$(BUILDDIR):
+	@mkdir -p "$@"
 
-mount:
-	open "$(BUILDDISK)".po
-
-preconditions:
-	@$(ACME) --version | grep -q "ACME, release" || (echo "ACME is not installed" && exit 1)
-	@$(CADIUS) | grep -q "cadius v" || (echo "Cadius is not installed" && exit 1)
-	@$(PYTHON) --version | grep -q "Python 3" || (echo "Python 3 is not installed" && exit 1)
-
-all: clean font asm dist mount
-
-al: all
+all: clean mount
