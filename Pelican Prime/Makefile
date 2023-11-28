@@ -20,7 +20,7 @@ $(BUILDDISK): $(EXE)
 	cp ../common/blank.po "$@"
 	$(CADIUS) ADDFILE "$@" "/$(DISKVOLUME)/" "$(EXE)"
 
-$(EXE): $(SOURCES) $(BUILDDIR) $(FONTDATA)
+$(EXE): $(SOURCES) $(FONTDATA) | $(BUILDDIR)
 	$(ACME) -r build/sample.lst src/sample.a
 
 $(FONTDATA): font.py font-master.txt
