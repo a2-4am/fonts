@@ -1,0 +1,150 @@
+;license:MIT
+;(c) 2023 by 4am
+;
+!cpu 6502
+!to "build/SAMPLE.SYSTEM#FF2000",plain
+*=$2000
+
+         !source "../common/src/constants.a"    ; no code
+         !source "../common/src/macros.a"       ; no code
+
+         +READ_ROM_NO_WRITE
+         sta   PRIMARYCHARSET
+         sta   CLR80VID
+         sta   STOREOFF
+         sta   READMAINMEM
+         sta   WRITEMAINMEM
+         jsr   ROM_TEXT
+         jsr   ROM_HOME
+         jsr   ROM_NORMAL
+         jsr   ROM_IN0
+         jsr   ROM_PR0
+         +BUILD_HGR_LOOKUP_TABLES HGRLO, HGRHI
+
+         ; relocate program code
+-        inc   FM+2
+         inc   FMDEST+2
+         lda   FM+2
+         cmp   #>LastMover
+         bcc   -
+         ldx   #0
+FM       lda   FirstMover, x
+FMDEST   sta   RELOC, x
+         inx
+         bne   FM
+         dec   FM+2
+         dec   FMDEST+2
+         lda   FMDEST+2
+         cmp   #>RELOC
+         bcs   FM
+
+         jmp   Start
+
+FirstMover
+!pseudopc RELOC {
+Start
+         jsr   Home
+         lda   #0
+         sta   STRINGINDEX
+PrintLoop
+         ldx   STRINGINDEX
+         lda   StringPointers, x
+         inx
+         ldy   StringPointers, x
+         beq   PrintDone
+         inx
+         stx   STRINGINDEX
+         ldx   #0
+         jsr   DrawString
+         inc   VTAB
+         bne   PrintLoop             ; always branches
+PrintDone
+         +DEBUGWAIT
+         jsr   PRODOS_MLI
+         !byte $65
+         !word +
++        !byte 4
+
+s_header1
+         !byte 40
+         !raw  "Circuitous               (c) 2018 by 4am"
+s_blank
+         !byte 0
+s_header2
+         !byte 40
+         !raw  "A decorative pixel font for the Apple ]["
+s_sample1
+         !byte 40
+         !raw  "Pack my box with five dozen liquor jugs."
+s_sample2
+         !byte 37
+         !raw  "Jackdaws love my big sphinx of quartz"
+s_sample3
+         !byte 37
+         !raw  "Sphinx of black quartz, judge my vow!"
+s_sample4
+         !byte 36
+         !raw  "The five boxing wizards jump quickly"
+s_sample5
+         !byte 35
+         !raw  "How quickly daft jumping zebras vex"
+s_sample6
+         !byte 34
+         !raw  "Glib jocks quiz nymph to vex dwarf"
+s_alpha_upper
+         !byte 26
+         !raw  "A B C D E F G H I J K L M "
+s_alpha_upper2
+         !byte 26
+         !raw  " N O P Q R S T U V W X Y Z"
+s_alpha_lower
+         !byte 26
+         !raw  "abcdefghijklmnopqrstuvwxyz"
+s_numerals
+         !byte 37
+         !raw  "1234567890@#$%^&*()-=_+[]\\;':\",./<>?!"
+s_lorem_1
+         !byte 39
+         !raw  "Lorem ipsum dolor sit amet, consectetur"
+s_lorem_2
+         !byte 38
+         !raw  "adipiscing elit, sed do eiusmod tempor"
+s_lorem_3
+         !byte 36
+         !raw  "incididunt ut labore et dolore magna"
+s_lorem_4
+         !byte 40
+         !raw  "aliqua. Lacus vel facilisis volutpat est"
+s_lorem_5
+         !byte 39
+         !raw  "velit egestas dui id. Ornare massa eget"
+
+StringPointers
+         !word s_header1
+         !word s_blank
+         !word s_header2
+         !word s_blank
+         !word s_sample1
+         !word s_sample2
+         !word s_sample3
+         !word s_sample4
+         !word s_sample5
+         !word s_sample6
+         !word s_blank
+         !word s_alpha_upper
+         !word s_alpha_upper2
+         !word s_alpha_lower
+         !word s_numerals
+         !word s_blank
+         !word s_lorem_1
+         !word s_lorem_2
+         !word s_lorem_3
+         !word s_lorem_4
+         !word s_lorem_5
+         !word 0
+
+         !source "../common/src/ui.common.a"
+         !source "src/ui.font.a"
+         !source "src/ui.font.data.a"
+}
+LastMover
