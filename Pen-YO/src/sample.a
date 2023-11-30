@@ -77,10 +77,10 @@ s_sample1
          !byte 40
          !raw  "Pack my box with five dozen liquor jugs."
 s_sample2
-         !BYTE 38
-         !RAW  "Jackdaws love my big sphinx of quartz."
-s_sample3
          !byte 38
+         !raw  "Jackdaws love my big sphinx of quartz."
+s_sample3
+         !byte 37
          !raw  "Sphinx of black quartz, judge my vow!"
 s_sample4
          !byte 37
