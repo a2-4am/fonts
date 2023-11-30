@@ -1,0 +1,91 @@
+;license:MIT
+;(c) 2023 by 4am
+;
+; drawing routines for Mono Number 7 pixel font
+;
+; Public functions:
+; - DrawString
+;
+
+HGRTops
+         !byte 0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70
+         !byte 77, 84, 91, 98, 105, 112, 119, 126, 133, 140
+         !byte 147, 154, 161, 168, 175, 182
+
+;------------------------------------------------------------------------------
+; DrawString
+;
+; in:    A/Y points to length-prefixed string (Pascal style, length byte can be 0)
+;        X contains column number (0x00..0x27)
+;        VTAB contains logical line number (0-indexed)
+; out:   clobbers all registers & flags
+;        clobbers HTAB
+;        preserves VTAB
+;------------------------------------------------------------------------------
+DrawString
+         +ST16 STRINGPTR
+         stx   HTAB
+         ldy   #0
+         lda   (STRINGPTR), y
+         bne   +
+         rts
++        tax
+         dex
+         +LD16 STRINGPTR
+         +INC16
+         +ST16 @loop+1
+         ldy   VTAB
+         lda   HGRTops, y
+         tay
+         lda   HGRLO, y
+         clc
+         adc   HTAB
+         sta   @row0+1
+         lda   HGRHI, y
+         sta   @row0+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row1+1
+         lda   HGRHI, y
+         sta   @row1+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row2+1
+         lda   HGRHI, y
+         sta   @row2+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row3+1
+         lda   HGRHI, y
+         sta   @row3+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row4+1
+         lda   HGRHI, y
+         sta   @row4+2
+         iny
+         lda   HGRLO, y
+         adc   HTAB
+         sta   @row5+1
+         lda   HGRHI, y
+         sta   @row5+2
+@loop    ldy   $FDFD, x
+         lda   FontDataRow0-kFontDataMin, y
+@row0    sta   $FDFD, x
+         lda   FontDataRow1-kFontDataMin, y
+@row1    sta   $FDFD, x
+         lda   FontDataRow2-kFontDataMin, y
+@row2    sta   $FDFD, x
+         lda   FontDataRow3-kFontDataMin, y
+@row3    sta   $FDFD, x
+         lda   FontDataRow4-kFontDataMin, y
+@row4    sta   $FDFD, x
+         lda   FontDataRow5-kFontDataMin, y
+@row5    sta   $FDFD, x
+         dex
+         bpl   @loop
+         rts
