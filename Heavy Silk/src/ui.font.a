@@ -1,7 +1,7 @@
 ;license:MIT
 ;(c) 2023 by 4am
 ;
-; drawing routines for Mono Number 7 pixel font
+; drawing routines for Heavy Silk pixel font
 ;
 ; Public functions:
 ; - DrawString
