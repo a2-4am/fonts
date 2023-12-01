@@ -72,13 +72,13 @@ s_blank
          !byte 0
 s_header2
          !byte 40
-         !raw  "A decorative pixel font for the Apple II"
+         !raw  "A decorative pixel font for the Apple ]["
 s_sample1
          !byte 40
          !raw  "Pack my box with five dozen liquor jugs."
 s_sample2
-         !byte 36
-         !raw  "Jackdaw love my big sphinx of quartz"
+         !byte 37
+         !raw  "Jackdaws love my big sphinx of quartz"
 s_sample3
          !byte 37
          !raw  "Sphinx of black quartz, judge my vow!"
