@@ -1,7 +1,7 @@
 ;license:MIT
 ;(c) 2023 by 4am
 ;
-; Fred Mini proportional font drawing routines
+; Proportional font drawing routines
 ;
 ; Public functions:
 ; - GetStringWidth
