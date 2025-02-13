@@ -8,9 +8,12 @@
 # Do not include the space character.
 all_chars = list(map(chr, range(0x21, 0x80)))
 
+# must match kPropFontMaskHeight in renderer
+height = 9
+
 min_index = ord(all_chars[0])
 max_index_plus_1 = ord(all_chars[-1]) + 1
-step = 18
+step = height * 2
 data = {}
 with open("font-master.txt", "r") as f:
     for c in all_chars:
@@ -18,7 +21,7 @@ with open("font-master.txt", "r") as f:
         data[c]["description"] = f.readline().strip()[1:]
         data[c]["rawbits"] = []
         data[c]["width"] = 0
-        for row in range(9):
+        for row in range(height):
             rawbits = f.readline().strip()
             data[c]["rawbits"].append(rawbits)
             rowwidth = rawbits.rfind("1")
