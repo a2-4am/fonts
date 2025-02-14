@@ -1,0 +1,225 @@
+;license:MIT
+;(c) 2025 by 4am
+;
+!cpu 6502
+!to "build/SAMPLE.SYSTEM#FF2000",plain
+*=$2000
+
+         !source "src/constants.a"              ; no code
+         !source "../common/src/constants.a"    ; no code
+         !source "../common/src/macros.a"       ; no code
+
+         +READ_ROM_NO_WRITE
+         sta   PRIMARYCHARSET
+         sta   CLR80VID
+         sta   STOREOFF
+         sta   READMAINMEM
+         sta   WRITEMAINMEM
+         jsr   ROM_TEXT
+         jsr   ROM_HOME
+         jsr   ROM_NORMAL
+         jsr   ROM_IN0
+         jsr   ROM_PR0
+         +BUILD_HGR_LOOKUP_TABLES HGRLO, HGRHI
+
+         ; relocate font data
+         ldx   #>(EndPropFontData - StartPropFontData)
+         ldy   #0
+PF       lda   StartPropFontData, y
+PFDEST   sta   PropFontWidths, y
+         iny
+         bne   PF
+         inc   PF+2
+         inc   PFDEST+2
+         dex
+         bpl   PF
+
+         ; relocate program code
+-        inc   FM+2
+         inc   FMDEST+2
+         lda   FM+2
+         cmp   #>LastMover
+         bcc   -
+         ldx   #0
+FM       lda   FirstMover, x
+FMDEST   sta   RELOC, x
+         inx
+         bne   FM
+         dec   FM+2
+         dec   FMDEST+2
+         lda   FMDEST+2
+         cmp   #>RELOC
+         bcs   FM
+
+         ; copy part of font drawing routine to zero page
+         ldx   #(DPC_DRAW_END-DPC_DRAW_START)
+-        lda   DPC_DRAW_START, x
+         sta   dpc_draw, x
+         dex
+         bpl   -
+
+         ; generate font preshift tables
+         lda   #<PropFontShift0
+         sta   ZPTMP0
+         lda   #>PropFontShift0
+         sta   ZPTMP0 + 1
+         lda   #<PropFontShift1
+         sta   ZPTMP1
+         lda   #>PropFontShift1
+         sta   ZPTMP1 + 1
+         ldx   #6
+         ldy   #0
+--       lda   ZPTMP1
+         clc
+         adc   #<(kPropFontCount * kPropFontMaskHeight * 2)
+         sta   ZPTMP2
+         lda   ZPTMP1 + 1
+         adc   #>(kPropFontCount * kPropFontMaskHeight * 2)
+         sta   ZPTMP2 + 1
+-        lda   (ZPTMP0), y
+         inc   ZPTMP0
+         bne   +
+         inc   ZPTMP0 + 1
++        asl
+         asl
+         php
+         lsr
+         sta   (ZPTMP1), y
+         inc   ZPTMP1
+         bne   +
+         inc   ZPTMP1 + 1
++        lda   (ZPTMP0), y
+         inc   ZPTMP0
+         bne   +
+         inc   ZPTMP0 + 1
++        plp
+         rol
+         sta   (ZPTMP1), y
+         inc   ZPTMP1
+         bne   +
+         inc   ZPTMP1 + 1
++        lda   ZPTMP1
+         cmp   ZPTMP2
+         lda   ZPTMP1 + 1
+         sbc   ZPTMP2 + 1
+         bne   -
+         dex
+         bne   --
+
+         ; build pixel-to-byte/offset tables
+         ldy   #0
+         ldx   #7
+@byteloop
+         lda   #0
+         sta   HPixelToByte, y
+         dex
+         bne   +
+         inc   @byteloop+1
+         ldx   #7
++        iny
+         bne   @byteloop
+
+         ;Y=0
+         ldx   #0
+@offsetloop
+         txa
+         sta   HPixelToOffset, y
+         inx
+         cpx   #7
+         bcc   +
+         ldx   #0
++        iny
+         bne   @offsetloop
+
+         jmp   Start
+
+StartPropFontData
+         !source "src/ui.font.data.a"
+EndPropFontData
+
+FirstMover
+!pseudopc RELOC {
+Start
+         jsr   Home
+         +LDADDR s_header1
+         jsr   DrawCenteredString
+         inc   VTAB
+         +LDADDR s_header2
+         jsr   DrawCenteredString
+         inc   VTAB
+         +LDADDR s_header3
+         jsr   DrawCenteredString
+         inc   VTAB
+         inc   VTAB
+
+         lda   #0
+         sta   STRINGINDEX
+PrintLoop
+         ldx   STRINGINDEX
+         lda   StringPointers, x
+         inx
+         ldy   StringPointers, x
+         beq   PrintDone
+         inx
+         stx   STRINGINDEX
+         ldx   #0
+         jsr   DrawString
+         inc   VTAB
+         bne   PrintLoop             ; always branches
+PrintDone
+         +DEBUGWAIT
+         jsr   PRODOS_MLI
+         !byte $65
+         !word +
++        !byte 4
+
+s_header1
+         +PSTRING "PATROL II"
+s_header2
+         +PSTRING "A PROPORTIONAL FONT FOR APPLE ]["
+s_header3
+         +PSTRING "(c) 2025 by 4am"
+s_blank
+         !byte 0
+s_sample1
+         +PSTRING "Pack my box with five dozen liquor"
+s_sample2
+         +PSTRING "jugs. Jackdaws love my big sphinx of"
+s_sample3
+         +PSTRING "quartz. Sphinx of black quartz, judge"
+s_sample4
+         +PSTRING "my vow! The five boxing wizards jump"
+s_sample5
+         +PSTRING "quickly. How quickly daft jumping"
+s_sample6
+         +PSTRING "zebras vex. Glib jocks quiz nymph to"
+s_sample7
+         +PSTRING "vex dwarf."
+s_alpha_upper
+         +PSTRING "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+s_alpha_lower
+         +PSTRING "abcdefghijklmnopqrstuvwxyz"
+s_numerals
+         +PSTRING "1234567890"
+s_punctuation
+         +PSTRING "!@#$%^&*-=_+()[]\\{}|;':\",./<>?`~"
+
+StringPointers
+         !word s_sample1
+         !word s_sample2
+         !word s_sample3
+         !word s_sample4
+         !word s_sample5
+         !word s_sample6
+         !word s_sample7
+         !word s_blank
+         !word s_alpha_upper
+         !word s_alpha_lower
+         !word s_numerals
+         !word s_punctuation
+         !word 0
+
+         !source "../common/src/ui.common.a"
+         !source "src/ui.font.a"
+}
+LastMover
