@@ -1,7 +1,7 @@
 ;license:MIT
 ;(c) 2023 by 4am
 ;
-; Proportional font drawing routines
+; Proportional font drawing routines for characters up to 7 pixels wide
 ;
 ; Public functions:
 ; - GetStringWidth
