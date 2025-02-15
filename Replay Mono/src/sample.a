@@ -88,7 +88,7 @@ s_sample6
 s_alpha_upper
          +PSTRING "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 s_alpha_lower
-         +PSTRING "abcdefghijklmnoprqstuvwxyz"
+         +PSTRING "abcdefghijklmnopqrstuvwxyz"
 s_numerals
          +PSTRING "1234567890@#$%^&*()-=_+[]\\;':\",./<>?!"
 s_lorem_1

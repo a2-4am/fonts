@@ -99,7 +99,7 @@ s_alpha_upper
          !raw  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 s_alpha_lower
          !byte 26
-         !raw  "abcdefghijklmnoprqstuvwxyz"
+         !raw  "abcdefghijklmnopqrstuvwxyz"
 s_numerals
          !byte 37
          !raw  "1234567890@#$%^&*()-=_+[]\\;':\",./<>?!"
