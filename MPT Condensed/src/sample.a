@@ -93,7 +93,7 @@ s_sample6
          !raw  "Glib jocks quiz nymph to vex dwarf"
 s_alpha_upper
          !byte 26
-         !raw  "ABCDEFGHIJKLMNOPRQSTUVWXYZ"
+         !raw  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 s_alpha_lower
          !byte 26
          !raw  "abcdefghijklmnoprqstuvwxyz"

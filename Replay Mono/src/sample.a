@@ -86,7 +86,7 @@ s_sample5
 s_sample6
          +PSTRING "Glib jocks quiz nymph to vex dwarf"
 s_alpha_upper
-         +PSTRING "ABCDEFGHIJKLMNOPRQSTUVWXYZ"
+         +PSTRING "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 s_alpha_lower
          +PSTRING "abcdefghijklmnoprqstuvwxyz"
 s_numerals
