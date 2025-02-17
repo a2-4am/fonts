@@ -1,0 +1,272 @@
+;license:MIT
+;(c) 2025 by 4am
+;
+; Proportional font drawing routines for characters up to 8 pixels wide
+;
+; Public functions:
+; - GetStringWidth
+; - DrawCenteredString
+; - DrawString
+;
+
+;------------------------------------------------------------------------------
+; GetStringWidth
+; calculate string width in pixels, based on widths of individual characters
+;
+; in:    A/Y -> length-prefixed string (Pascal style, length byte can be 0)
+; out:   A/Y = string width in pixels (word)
+;        X clobbered
+;        flags clobbered
+;------------------------------------------------------------------------------
+GetStringWidth
+         +ST16 dpc_string
+         ldy   #0
+         sty   dpc_stringwidth
+         sty   dpc_stringwidth+1
+         lda   (dpc_string), y
+         beq   @exit
+         sta   dpc_charcount
+-        iny
+         lda   (dpc_string), y
+         cmp   #$20
+         beq   +
+         cmp   #kPropFontMin
+         bcc   @next
+         cmp   #kPropFontMax
+         bcs   @next
+         tax
+         lda   PropFontWidths-kPropFontMin, x
+         +HIDE_NEXT_2_BYTES
++        lda   #kPropFontSpaceCharacterWidth
+         clc
+         adc   dpc_stringwidth
+         sta   dpc_stringwidth
+         bcc   @next
+         inc   dpc_stringwidth+1
+@next    dec   dpc_charcount
+         bne   -
+@exit
+         +LD16 dpc_stringwidth
+FONTRTS  rts
+
+DrawCenteredString
+; in:    A/Y -> length-prefixed string
+;        VTAB = logical row (0..18)
+         jsr   GetCenteredHTAB
+         tax
+         +LD16 dpc_string
+         ; /!\ execution falls through here to DrawString
+
+;------------------------------------------------------------------------------
+; DrawString
+;
+; in:    A/Y -> length-prefixed string (Pascal style, length byte can be 0)
+;        X = horizontal pixel (0..255)
+;        VTAB = logical line number (0..18)
+; out:   clobbers all registers & flags
+;        clobbers HTAB
+;        preserves VTAB
+;------------------------------------------------------------------------------
+DrawString
+         stx   dpc_HTAB
+         ldx   #0
+         stx   dpc_HTAB+1
+DrawStringPast255 ; set dpc_HTAB and dpc_HTAB+1 yourself before calling
+         +ST16 dpc_string
+         +ST16 dps_src+1
+         ldy   #0
+         lda   (dpc_string), y
+         beq   FONTRTS
+         sta   dpc_charcount
+         iny
+         sty   dpc_charindex
+         ldx   VTAB
+         lda   PropFontRowTops, x
+         sta   dpc_VTAB
+         clc
+         adc   #kPropFontMaskHeight
+         sta   <dpc_max_row+1
+dps_loop
+         ldy   dpc_charindex
+dps_src  lda   SELF_MODIFIED_WORD, y
+
+         cmp   #$20
+         beq   dps_space_hack
+         cmp   #kPropFontMin
+         bcc   dps_next
+         cmp   #kPropFontMax
+         bcs   dps_next
+
+         ; look up offset of this character within shift table
+         tax
+         lda   PropFontOffsetHi-kPropFontMin, x
+         bmi   dps_next
+         sta   dpc_charoffset+1
+         lda   PropFontOffsetLo-kPropFontMin, x
+         sta   dpc_charoffset
+
+         ; convert HGR horizonal pixel to byte + offset-within-byte
+         lda   PropFontWidths-kPropFontMin, x ; get character width
+         ldx   dpc_HTAB              ; get current HTAB (lo)
+         clc
+         adc   dpc_HTAB
+         sta   dpc_HTAB              ; update HTAB (lo)
+         lda   dpc_HTAB+1
+         beq   @HTAB_less_than_256
+         lda   HHiPixelToByte, x
+         ldy   HHiPixelToOffset, x
+         bpl   @check_shift          ; always branches, set by LDY (always 0..6)
+@HTAB_less_than_256
+         lda   HPixelToByte, x
+         ldy   HPixelToOffset, x
+@check_shift
+         bcc   +                     ; set by ADC
+         inc   dpc_HTAB+1            ; update HTAB (hi)
+         clc
++        sta   <dpc_ystart+1
+
+         ; use offset-within-byte to look up the proper preshifted mask
+         lda   PropFontMaskShiftLo, y
+         sta   <dpc_mask+1
+         lda   PropFontMaskShiftHi, y
+         sta   <dpc_mask+2
+
+         ; calculate start of font data (= preshift table base + dpc_charoffset)
+         lda   PropFontShiftLo, y
+         clc
+         adc   dpc_charoffset
+         sta   <dpc_src+1
+         lda   PropFontShiftHi, y
+         adc   dpc_charoffset+1
+         sta   <dpc_src+2
+         lda   dpc_VTAB
+         sta   <dpc_row_loop+1       ; start row
+         ldx   #0                    ; byte index within model
+         jsr   dpc_row_loop
+dps_next
+         inc   dpc_charindex
+         dec   dpc_charcount
+         bne   dps_loop
+@exit    rts
+dps_space_hack
+         lda   dpc_HTAB
+         clc
+         adc   #kPropFontSpaceCharacterWidth
+         sta   dpc_HTAB
+         bcc   +
+         inc   dpc_HTAB+1
++        bne   dps_next              ; always branches
+
+DPC_DRAW_START                       ; copied to zero page at startup
+!pseudopc dpc_draw {
+dpc_start
+         lda   HGRLO, y
+         sta   <dpc_dest+1
+         lda   HGRHI, y
+         sta   <dpc_dest+2
+dpc_ystart
+         ldy   #SELF_MODIFIED_BYTE   ; byte index within target HGR row
+         !byte $C0                   ; CPY #$38 will always clear carry
+dpc_inner_loop
+         sec                         ; set exit condition on second pass
+dpc_src  lda   SELF_MODIFIED_WORD, x
+         beq   +                     ; expensive but worth it
+dpc_dest eor   SELF_MODIFIED_WORD, y
+dpc_mask and   SELF_MODIFIED_WORD, x
+         eor   (<dpc_dest+1), y
+         sta   (<dpc_dest+1), y
++        iny
+         inx
+         bcc   dpc_inner_loop
+         inc   <dpc_row_loop+1
+dpc_row_loop
+         ldy   #SELF_MODIFIED_BYTE
+dpc_max_row
+         cpy   #SELF_MODIFIED_BYTE
+         bcc   dpc_start
+         rts
+}
+DPC_DRAW_END
+
+GetCenteredHTAB
+; in:    A/Y -> length-prefixed string
+;        VTAB = logical row (0..18)
+; out:   A = HTAB for string to be centered on screen
+         jsr   GetStringWidth
+         cpy   #1
+         ror
+         sta   @a+1
+         lda   #$8c
+         sec
+@a       sbc   #SELF_MODIFIED_BYTE
+         rts
+
+;------------------------------------------------------------------------------
+; private
+
+kPropFontSpaceCharacterWidth = 6
+
+PropFontRowTops
+         !byte $00, $10, $20, $30, $40, $50, $60, $70, $80, $90, $A0, $B0
+
+; Structure of these is intentionally repetitive to allow font drawing
+; routine to be slightly faster. Do not optimize these tables.
+PropFontMaskShift0
+         !for  x, 1, kPropFontMaskHeight { !byte %01111111,%00000001 }
+PropFontMaskShift1
+         !for  x, 1, kPropFontMaskHeight { !byte %01111110,%00000011 }
+PropFontMaskShift2
+         !for  x, 1, kPropFontMaskHeight { !byte %01111100,%00000111 }
+PropFontMaskShift3
+         !for  x, 1, kPropFontMaskHeight { !byte %01111000,%00001111 }
+PropFontMaskShift4
+         !for  x, 1, kPropFontMaskHeight { !byte %01110000,%00011111 }
+PropFontMaskShift5
+         !for  x, 1, kPropFontMaskHeight { !byte %01100000,%00111111 }
+PropFontMaskShift6
+         !for  x, 1, kPropFontMaskHeight { !byte %01000000,%01111111 }
+PropFontMaskShiftLo
+         !byte <PropFontMaskShift0
+         !byte <PropFontMaskShift1
+         !byte <PropFontMaskShift2
+         !byte <PropFontMaskShift3
+         !byte <PropFontMaskShift4
+         !byte <PropFontMaskShift5
+         !byte <PropFontMaskShift6
+PropFontMaskShiftHi
+         !byte >PropFontMaskShift0
+         !byte >PropFontMaskShift1
+         !byte >PropFontMaskShift2
+         !byte >PropFontMaskShift3
+         !byte >PropFontMaskShift4
+         !byte >PropFontMaskShift5
+         !byte >PropFontMaskShift6
+PropFontShiftLo
+         !byte <PropFontShift0
+         !byte <PropFontShift1
+         !byte <PropFontShift2
+         !byte <PropFontShift3
+         !byte <PropFontShift4
+         !byte <PropFontShift5
+         !byte <PropFontShift6
+PropFontShiftHi
+         !byte >PropFontShift0
+         !byte >PropFontShift1
+         !byte >PropFontShift2
+         !byte >PropFontShift3
+         !byte >PropFontShift4
+         !byte >PropFontShift5
+         !byte >PropFontShift6
+
+; Additional horizontal-pixel-to-byte+offset tables for pixels 256..279
+; (pixels 0..255 use different tables which are generated at startup)
+HHiPixelToByte
+         !byte $24,$24,$24
+         !byte $25,$25,$25,$25,$25,$25,$25
+         !byte $26,$26,$26,$26,$26,$26,$26
+         !byte $27,$27,$27,$27,$27,$27,$27
+HHiPixelToOffset
+         !byte $04,$05,$06
+         !byte $00,$01,$02,$03,$04,$05,$06
+         !byte $00,$01,$02,$03,$04,$05,$06
+         !byte $00,$01,$02,$03,$04,$05,$06
