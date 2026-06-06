@@ -1,7 +1,7 @@
 ;license:MIT
 ;(c) 2025 by 4am
 ;
-; drawing routines for Mono Upper 5 pixel font
+; drawing routines for Replay Mono pixel font
 ;
 ; Public functions:
 ; - DrawString
